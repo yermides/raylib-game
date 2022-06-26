@@ -1,0 +1,8 @@
+/assets/
+/lib/
+/obj/
+/winobj/
+*.exe
+*.dll
+*.bat
+*.code-workspace

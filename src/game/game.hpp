@@ -1,0 +1,18 @@
+#pragma once
+#include "ecs/manager.hpp"
+#include "game/sys/helpers/all.hpp"
+#include "game/man/factory/factory.hpp"
+
+struct Game_t {
+    explicit Game_t();
+
+private:
+    void loop();
+
+    ECS::EntityManager_t EntMan {};
+    SRender_t Render { 1600, 900 };
+    SInput_t Input { KeyBindings_t::RaylibBindings() };
+    EntityFactory_t Factory { EntMan };
+
+    ECS::Entityid_t eCamera, ePlayer;
+};
