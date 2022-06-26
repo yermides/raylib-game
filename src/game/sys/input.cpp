@@ -8,14 +8,9 @@ SInput_t::SInput_t(const KeyBindings_t& bindings) {
 // TODO: clean this mess, it works but please...
 void SInput_t::update(ECS::EntityManager_t& EntMan) {
     auto lambda = [this, &EntMan](auto e, CInput_t& input) {
-
-        // std::cout << "lol\n";
-
         for (auto& action : input.actions) {
             auto func = checks.at(action.requiredState);
             Key_t keycode = action.requiredKey;
-
-            // std::cout << keycode + "\n";
 
             if(func(this, keycode) && action.callback) {
                 action.callback(EntMan, e);

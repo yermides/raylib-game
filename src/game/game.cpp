@@ -3,8 +3,14 @@
 #include "helpers/includes/raylib.hpp"
 #include <iostream>
 
+#include "helpers/vector3.hpp"
+
 Game_t::Game_t() {
+    Vector3_t v1 {1,1,1};
+    Vector3_t v2 {2,3,4};
+
     std::cout << "Hello from Game!\n";
+    Vector3_t::print(v1 = v2);
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);

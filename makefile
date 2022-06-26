@@ -1,5 +1,3 @@
-# cd ../../../d/Proyectos/C++/raylib_game
-
 ##################################
 # 		  Main Makefile 		 #
 ##################################
@@ -49,7 +47,7 @@ $(patsubst %.c,%.h,$(patsubst %.cpp,%.hpp,$(1)))
 endef
 
 #---------------------------#
-# VARIABLES 				#
+# VARIABLES  				#
 #---------------------------#
 ## Application Name
 APP			:= game
@@ -59,7 +57,6 @@ CC			:= g++
 C			:= gcc
 CCFLAGS		:= -Wall -pedantic -std=c++17#-std=c++2a -fconcepts# -O3
 CFLAGS		:= -Wall -pedantic
-
 
 ## Base directories
 SRC			:= src
@@ -103,8 +100,6 @@ MKDIR		:= mkdir -p
 # ifdef WIN32
 # CC			:= i686-w64-mingw32-g++
 # endif
-
-
 
 #---------------------------------#
 # DEPENDECIES AND GENERATED RULES #
