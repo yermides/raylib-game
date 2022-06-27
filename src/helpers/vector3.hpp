@@ -4,13 +4,17 @@
 #include "helpers/includes/raylib.hpp"
 #include <iostream>
 
-// Facade for glm::Vector3_t
-struct Vector3_t {
-    Vector3_t(float px = 0.0f, float py = 0.0f, float pz = 0.0f) {
+// Facade for glm::vec3
+struct Vector3f_t {
+    Vector3f_t(const glm::vec3& pv) {
+        set(pv);
+    }
+
+    Vector3f_t(float px = 0.0f, float py = 0.0f, float pz = 0.0f) {
         set(px, py, pz);
     }
 
-    Vector3_t operator+(const Vector3_t& other) {
+    Vector3f_t operator+(const Vector3f_t& other) {
         return { 
                 v.x + other.v.x
             ,   v.y + other.v.y
@@ -18,15 +22,29 @@ struct Vector3_t {
         };
     }
 
-    Vector3_t& operator=(const Vector3_t& other) {
+    Vector3f_t operator-(const Vector3f_t& other) {
+        return { 
+                v.x - other.v.x
+            ,   v.y - other.v.y
+            ,   v.z - other.v.z
+        };
+    }
+
+    Vector3f_t& operator=(const Vector3f_t& other) {
         v.x = other.v.x;
         v.y = other.v.y;
         v.z = other.v.z;
         return *this;
     }
 
-    Vector3_t& operator+=(const Vector3_t& other) {
-        Vector3_t result = (*this) + other;
+    Vector3f_t& operator+=(const Vector3f_t& other) {
+        Vector3f_t result = (*this) + other;
+        *this = result;
+        return *this;
+    }
+
+    Vector3f_t& operator-=(const Vector3f_t& other) {
+        Vector3f_t result = (*this) - other;
         *this = result;
         return *this;
     }
@@ -40,18 +58,63 @@ struct Vector3_t {
     constexpr const float& get_y() const { return v.y; }
     constexpr const float& get_z() const { return v.z; }
 
-    constexpr void set(glm::vec3 value) { v = value; }
+    constexpr void set(const glm::vec3& value) { v = value; }
     constexpr void set(float px, float py, float pz) { set_x(px); set_y(py); set_z(pz); }
     constexpr void set_x(float value) { v.x = value; }
     constexpr void set_y(float value) { v.y = value; }
     constexpr void set_z(float value) { v.z = value; }
 
-    Vector3_t normalized () {
+    inline Vector3f_t normalized () {
         glm::vec3 vector = glm::normalize(v);
-        return Vector3_t { vector.x, vector.y, vector.z };
+        return Vector3f_t { vector.x, vector.y, vector.z };
     }
 
-    inline static void print(const Vector3_t& vector) { 
+
+    // TODO: get direction vector
+    inline Vector3f_t forward() {
+        glm::vec3 front {};
+        // yaw = y (left right), pitch = x (up down), roll = z (screw-like rotation)
+        float yaw = v.y, pitch = v.x /*, roll = v.z */;
+
+        front.x = -cos(glm::radians(pitch)) * sin(glm::radians(yaw));
+        front.y = sin(glm::radians(pitch));
+        front.z = -cos(glm::radians(pitch)) * cos(glm::radians(yaw));
+
+        front.x = glm::degrees(front.x);
+        front.y = glm::degrees(front.y);
+        front.z = glm::degrees(front.z);
+
+        front = glm::normalize(front);
+        return front;
+    }
+
+    // TODO:
+    inline Vector3f_t right() {
+        glm::vec3 result {};
+        float yaw = v.y;
+
+        result.x = glm::cos(yaw);
+        result.y = 0.0f;
+        result.z = -glm::sin(yaw);
+
+        glm::normalize(result);
+
+        return result;
+    }
+
+    // TODO:
+    inline Vector3f_t up() {
+        glm::vec3 result {};
+        float yaw = v.y, pitch = v.x /*, roll = v.z */;
+
+        result.x = glm::sin(pitch) * glm::sin(yaw);
+		result.y = glm::cos(pitch);
+		result.z = glm::sin(pitch) * glm::cos(yaw);
+
+        return result;
+    }
+
+    inline static void print(const Vector3f_t& vector) { 
         std::cout << glm::to_string(vector.v) << "\n";
     }
 

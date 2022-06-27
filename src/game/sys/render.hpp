@@ -23,6 +23,8 @@ struct SRender_t {
 private:
     static void updateOne(ECS::Entityid_t entity, CTransform_t& transform, CModelRenderer_t& model);
     void uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& camera);
+    void drawEverything(ECS::EntityManager_t& EntMan);
+
     ECS::Entityid_t mainCamera {};
-    // RL::Camera3D rlcamera {};
+    RL::Camera3D rlcamera {};
 };

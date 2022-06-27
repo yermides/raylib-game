@@ -6,16 +6,16 @@
 #include "helpers/vector3.hpp"
 
 Game_t::Game_t() {
-    Vector3_t v1 {1,1,1};
-    Vector3_t v2 {2,3,4};
+    Vector3f_t v1 {1,1,1};
+    Vector3f_t v2 {2,3,4};
 
     std::cout << "Hello from Game!\n";
-    Vector3_t::print(v1 = v2);
+    Vector3f_t::print(v1 = v2);
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
 
-    eCamera = Factory.createCamera(Vector3f{0,15,-10});
+    eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
     ePlayer = Factory.createPlayer(CTransform_t{{0,0,10}});
 
     // Factory.createPlayer(Vector3f{0,0,0});
@@ -26,21 +26,32 @@ Game_t::Game_t() {
     loop();
 }
 
+    // glm::lookAt({0,0,0});
+
 void Game_t::loop() {
-    const Vector3f offset = Vector3f{0,15,-20};
+    const Vector3f_t offset = Vector3f_t{0,15,-20};
+    auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
+    // CTransform_t& transform = EntMan.getComponent<CTransform_t>(ePlayer);
 
     while (Render.isAlive()) {
         Input.update(EntMan);
 
-        auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
-        CTransform_t& transform = EntMan.getComponent<CTransform_t>(ePlayer);
-        cTransform.position = transform.position + offset;
-        cCamera.target = transform.position;
+        // cTransform.position = transform.position + offset;
+        // cCamera.target = transform.position;
+
+        cTransform.rotation += {0,1,0};   
+        // cCamera.target = cTransform.rotation.forward(); 
+
+        if(Input.IsKeyDown(Key_t::W)) {
+            cTransform.position += cTransform.rotation.forward();
+        }
+
+        if(Input.IsKeyDown(Key_t::S)) {
+            cTransform.position -= cTransform.rotation.forward();
+        }
+
+        cCamera.target = cTransform.position + cTransform.rotation.forward(); // TODO: this line is the correct one! Add to system
 
         Render.update(EntMan);
-
-        // if(Input.IsKeyPressed(Key_t::A)) {
-        //     std::cout <<"A";
-        // }
     }
 }

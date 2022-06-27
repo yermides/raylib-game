@@ -2,6 +2,12 @@
 
 int main(void) {
     Game_t game {};
+
+
+    // Vector3f_t rot {0, 180, 0};
+    // Vector3f_t::print(rot.forward());
+    // std::cin.get();
+
     return 0;
 }
 

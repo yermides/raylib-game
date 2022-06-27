@@ -19,22 +19,8 @@ SRender_t::~SRender_t() {
 }
 
 void SRender_t::update(ECS::EntityManager_t& EntMan) {
-    // Define the camera to look into our 3d world
-    static RL::Camera3D camera {};
-
-    uploadCameraValues(EntMan, camera);
-
-    RL::BeginDrawing();
-        // RL::ClearBackground(RL::BLANK);
-        RL::ClearBackground(RL::RAYWHITE);
-        RL::BeginMode3D(camera);
-            EntMan.forAllMatching<CTransform_t, CModelRenderer_t>(updateOne);
-            drawGizmo();
-            RL::DrawGrid(20, 10.0f);
-        RL::EndMode3D();
-        RL::DrawText("(c) Lucas Mataix Garrigós", 1600 - 200, 900 - 20, 10, RL::GRAY);
-        RL::DrawFPS(10, 10);
-    RL::EndDrawing();
+    uploadCameraValues(EntMan, rlcamera);
+    drawEverything(EntMan);
 }
 
 bool SRender_t::isAlive(void) const {
@@ -53,7 +39,6 @@ void SRender_t::drawGizmo() {
     // RL::DrawCylinderWiresEx(start, {5,0,0}, 0.3, 0.3, 12, RL::WHITE);
     RL::DrawCylinderEx(start, {0,0,5}, 0.3, 0.3, 12, RL::BLUE);
     // RL::DrawCylinderWiresEx(start, {0,0,5}, 0.3, 0.3, 12, RL::WHITE);
-    // RL::DrawTextPro
 }
 
 float SRender_t::getDeltatime() {
@@ -75,17 +60,17 @@ void SRender_t::unloadModel(ECS::ComponentRegistry_t& registry, ECS::Entityid_t 
 void SRender_t::updateOne(ECS::Entityid_t entity, CTransform_t& transform, CModelRenderer_t& model) {
     // model.model.transform
     // RL::DrawModelEx
-    RL::DrawModel(model.model, V3A::adapt(transform.position), transform.scale.x, RL::WHITE); // TODO:
+    RL::DrawModel(model.model, transform.position, transform.scale.get_x(), RL::WHITE); // TODO:
     // std::cout << "updating one tr & model\n";
 }
 
 void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& camera) {
     // check if there is a valid camera entity
-    if(CCamera_t* cmp_cam = EntMan.tryGetComponent<CCamera_t>(mainCamera)) {
+    if(CCamera_t* cmp_cam = EntMan.tryGetComponent<CCamera_t>(mainCamera); cmp_cam != nullptr) {
         CTransform_t& transform = EntMan.getComponent<CTransform_t>(mainCamera);
-        camera.position = V3A::adapt(transform.position);
-        camera.target = V3A::adapt(cmp_cam->target); // TODO:
-        camera.up = V3A::adapt(cmp_cam->up);
+        camera.position = transform.position;
+        camera.target = cmp_cam->target; // TODO:
+        camera.up = cmp_cam->up;
         camera.fovy = cmp_cam->fovy;
         camera.projection = RL::CAMERA_PERSPECTIVE;
     } else { // if no camera component in scene, use these default values
@@ -97,4 +82,19 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
     }
 
     RL::UpdateCamera(&camera);
+}
+
+void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
+    RL::BeginDrawing();
+        // RL::ClearBackground(RL::BLANK);
+        RL::ClearBackground(RL::RAYWHITE);
+        RL::BeginMode3D(rlcamera);
+            EntMan.forAllMatching<CTransform_t, CModelRenderer_t>(updateOne);
+            drawGizmo();
+            // RL::DrawMesh(plane, RL::Material{}, RL::Matrix{});
+            RL::DrawGrid(20, 10.0f);
+        RL::EndMode3D();
+        RL::DrawText("(c) Lucas Mataix Garrigós", 1600 - 200, 900 - 20, 10, RL::GRAY);
+        RL::DrawFPS(10, 10);
+    RL::EndDrawing();
 }

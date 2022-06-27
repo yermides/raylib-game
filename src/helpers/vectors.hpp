@@ -1,9 +1,9 @@
-#pragma once
-#include <glm/glm.hpp>
+// #pragma once
+// #include <glm/glm.hpp>
 
-using Vector3f = glm::vec3;
+// using Vector3f = glm::vec3;
 
-#include "helpers/includes/raylib.hpp"
+// #include "helpers/includes/raylib.hpp"
 
 // Facade for glm::vec3
 // struct Vector3 {

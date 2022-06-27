@@ -7,8 +7,7 @@ enum class SpriteRenderMode_t {
     ,   THREE_DIMENSIONS
 };
 
-struct SpriteRenderer_t {
+struct SpriteRenderer_t : Renderer_t {
     SpriteRenderMode_t mode { SpriteRenderMode_t::TWO_DIMENSIONS };
-    
-    /* data */
+    /* TODO: texture, rect, etc */
 };
