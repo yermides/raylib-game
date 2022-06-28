@@ -38,7 +38,18 @@ enum Key_t {
     ,   SPACE  
     ,   ESCAPE 
     ,   ENTER  
-    ,   TAB    
+    ,   TAB  
+    ,   KRIGHT
+    ,   KLEFT
+    ,   KDOWN
+    ,   KUP
+    ,   LEFT_SHIFT
+    ,   LEFT_CONTROL
+    ,   LEFT_ALT
+    ,   RIGHT_SHIFT
+    ,   RIGHT_CONTROL
+    ,   RIGHT_ALT
+
 };
 
 // KEY_NULL            = 0,        // Key: NULL, used for no key pres

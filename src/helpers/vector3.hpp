@@ -1,5 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
+// #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include "helpers/includes/raylib.hpp"
 #include <iostream>
@@ -64,6 +65,10 @@ struct Vector3f_t {
     constexpr void set_y(float value) { v.y = value; }
     constexpr void set_z(float value) { v.z = value; }
 
+    constexpr void add_x(float value) { v.x += value; }
+    constexpr void add_y(float value) { v.y += value; }
+    constexpr void add_z(float value) { v.z += value; }
+
     inline Vector3f_t normalized () {
         glm::vec3 vector = glm::normalize(v);
         return Vector3f_t { vector.x, vector.y, vector.z };
@@ -91,13 +96,18 @@ struct Vector3f_t {
     // TODO:
     inline Vector3f_t right() {
         glm::vec3 result {};
-        float yaw = v.y;
+        // float yaw = v.y;
+        // {
+        //     result.x = glm::cos(yaw);
+        //     result.y = 0.0f;
+        //     result.z = -glm::sin(yaw);            
+        //     result = glm::normalize(result);
+        // }
 
-        result.x = glm::cos(yaw);
-        result.y = 0.0f;
-        result.z = -glm::sin(yaw);
-
-        glm::normalize(result);
+        {
+            glm::vec3 dir = forward();
+            result = glm::normalize(glm::cross(dir, glm::vec3{0,1,0}));
+        }
 
         return result;
     }
@@ -105,11 +115,19 @@ struct Vector3f_t {
     // TODO:
     inline Vector3f_t up() {
         glm::vec3 result {};
-        float yaw = v.y, pitch = v.x /*, roll = v.z */;
 
-        result.x = glm::sin(pitch) * glm::sin(yaw);
-		result.y = glm::cos(pitch);
-		result.z = glm::sin(pitch) * glm::cos(yaw);
+        // { // first option, I expect it to not work
+        //     float yaw = v.y, pitch = v.x /*, roll = v.z */;
+
+        //     result.x = glm::sin(pitch) * glm::sin(yaw);
+        //     result.y = glm::cos(pitch);
+        //     result.z = glm::sin(pitch) * glm::cos(yaw);
+        // }
+        {
+            glm::vec3 r = right();
+            glm::vec3 f = forward();
+            result    = glm::normalize(glm::cross(r, f));
+        }
 
         return result;
     }

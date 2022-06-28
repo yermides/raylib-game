@@ -8,12 +8,21 @@ SInput_t::SInput_t(const KeyBindings_t& bindings) {
 // TODO: clean this mess, it works but please...
 void SInput_t::update(ECS::EntityManager_t& EntMan) {
     auto lambda = [this, &EntMan](auto e, CInput_t& input) {
+        // Keyboard input actions
         for (auto& action : input.actions) {
             auto func = checks.at(action.requiredState);
             Key_t keycode = action.requiredKey;
 
             if(func(this, keycode) && action.callback) {
                 action.callback(EntMan, e);
+            }
+        }
+
+        // Mouse delta actions
+        for (auto& action : input.mouseDeltaActions) {
+            if(action.callback) {
+                Vector2f_t mouseDelta = getMouseDelta();
+                action.callback(EntMan, e, mouseDelta);
             }
         }
     };
@@ -39,6 +48,11 @@ bool SInput_t::IsKeyPressed(Key_t key) const {
 bool SInput_t::IsKeyReleased(Key_t key) const {
     int equivalenceKey = getKeyValue(key);
     return RL::IsKeyReleased(equivalenceKey);
+}
+
+Vector2f_t SInput_t::getMouseDelta() const {
+    RL::Vector2 mouseDelta = RL::GetMouseDelta();
+    return { mouseDelta.x, mouseDelta.y };
 }
 
 // Private

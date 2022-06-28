@@ -10,7 +10,7 @@ private:
     void loop();
 
     ECS::EntityManager_t EntMan {};
-    SRender_t Render { 1600, 900 };
+    SRender_t Render { 1920, 1080 }; // 2304, 1296
     SInput_t Input { KeyBindings_t::RaylibBindings() };
     EntityFactory_t Factory { EntMan };
 

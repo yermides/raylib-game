@@ -5,6 +5,7 @@
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/keybindings.hpp"
 #include "helpers/includes/raylib.hpp"
+#include "helpers/vector2.hpp"
 
 struct SInput_t {
     explicit SInput_t(const KeyBindings_t& bindings);
@@ -15,6 +16,7 @@ struct SInput_t {
     bool IsKeyUp(Key_t key) const;
     bool IsKeyPressed(Key_t key) const;
     bool IsKeyReleased(Key_t key) const;
+    Vector2f_t getMouseDelta() const;
 private:
     int getKeyValue(Key_t key) const;
     static void updateOne(ECS::Entityid_t e, CInput_t& input);

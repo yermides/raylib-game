@@ -6,8 +6,16 @@
 SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
     RL::SetConfigFlags(RL::FLAG_MSAA_4X_HINT | RL::FLAG_VSYNC_HINT);
     RL::InitWindow(width, height, "My Raylib Game");
-    // RL::SetWindowState(RL::FLAG_WINDOW_RESIZABLE);
-    RL::SetTargetFPS(60); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
+
+    uint32_t stateFlags = 
+        RL::FLAG_WINDOW_RESIZABLE 
+    // |   RL::FLAG_WINDOW_UNDECORATED
+    |   RL::FLAG_WINDOW_RESIZABLE
+    ;
+
+    RL::SetWindowState(stateFlags);
+    RL::SetTargetFPS(120); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
+    RL::DisableCursor();
 
 //     if(flags & RenderFlags_t::ANTIALIASING) {
 
@@ -60,7 +68,7 @@ void SRender_t::unloadModel(ECS::ComponentRegistry_t& registry, ECS::Entityid_t 
 void SRender_t::updateOne(ECS::Entityid_t entity, CTransform_t& transform, CModelRenderer_t& model) {
     // model.model.transform
     // RL::DrawModelEx
-    RL::DrawModel(model.model, transform.position, transform.scale.get_x(), RL::WHITE); // TODO:
+    RL::DrawModel(model.model, transform.position, transform.scale.get_x(), RL::WHITE); // TODO: improve
     // std::cout << "updating one tr & model\n";
 }
 
@@ -69,7 +77,9 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
     if(CCamera_t* cmp_cam = EntMan.tryGetComponent<CCamera_t>(mainCamera); cmp_cam != nullptr) {
         CTransform_t& transform = EntMan.getComponent<CTransform_t>(mainCamera);
         camera.position = transform.position;
-        camera.target = cmp_cam->target; // TODO:
+        // camera.target = cmp_cam->target; // TODO: put this in the camera system
+        camera.target = transform.position + transform.rotation.forward();
+        
         camera.up = cmp_cam->up;
         camera.fovy = cmp_cam->fovy;
         camera.projection = RL::CAMERA_PERSPECTIVE;

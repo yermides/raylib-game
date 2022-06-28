@@ -15,8 +15,8 @@ Game_t::Game_t() {
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
 
-    eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
-    ePlayer = Factory.createPlayer(CTransform_t{{0,0,10}});
+    // eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
+    // ePlayer = Factory.createPlayer(CTransform_t{{0,0,10}});
 
     // Factory.createPlayer(Vector3f{0,0,0});
     // Factory.createPlayer(Vector3f{0,0,0});
@@ -29,17 +29,24 @@ Game_t::Game_t() {
     // glm::lookAt({0,0,0});
 
 void Game_t::loop() {
-    const Vector3f_t offset = Vector3f_t{0,15,-20};
-    auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
+    // const Vector3f_t offset = Vector3f_t{0,15,-20};
+    // auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
     // CTransform_t& transform = EntMan.getComponent<CTransform_t>(ePlayer);
+
+    Factory.createFlyingCamera(CTransform_t{{0,15,-10}, {0,0,0}});
 
     while (Render.isAlive()) {
         Input.update(EntMan);
+        Render.update(EntMan);
+    }
+}
 
+
+/*
         // cTransform.position = transform.position + offset;
         // cCamera.target = transform.position;
 
-        cTransform.rotation += {0,1,0};   
+        cTransform.rotation += {0,1,0};
         // cCamera.target = cTransform.rotation.forward(); 
 
         if(Input.IsKeyDown(Key_t::W)) {
@@ -50,8 +57,22 @@ void Game_t::loop() {
             cTransform.position -= cTransform.rotation.forward();
         }
 
-        cCamera.target = cTransform.position + cTransform.rotation.forward(); // TODO: this line is the correct one! Add to system
+        if(Input.IsKeyDown(Key_t::A)) {
+            cTransform.position -= cTransform.rotation.right();
+        }
 
-        Render.update(EntMan);
-    }
-}
+        if(Input.IsKeyDown(Key_t::D)) {
+            cTransform.position += cTransform.rotation.right();
+        }
+
+        if(Input.IsKeyDown(Key_t::SPACE)) {
+            cTransform.position += cTransform.rotation.up();
+        }
+
+        if(Input.IsKeyDown(Key_t::TAB)) {
+            cTransform.position -= cTransform.rotation.up();
+        }
+
+        // cCamera.target = {0,0,0};
+        // cCamera.target = cTransform.position + cTransform.rotation.forward();
+*/
