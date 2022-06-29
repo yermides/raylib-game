@@ -13,7 +13,3 @@ struct EntityFactory_t {
 private:
     ECS::EntityManager_t& EntMan;
 };
-
-    // #define EntityFactoryGeneralParams const CTransform_t& ptransform = {}
-    // ECS::Entityid_t createCamera(const Vector3f& position);
-    // ECS::Entityid_t createPlayer(const Vector3f& position);

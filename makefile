@@ -88,9 +88,9 @@ SUBDIRS		:= $(shell find $(SRC) -type d)
 OBJSUBDIRS	:= $(patsubst $(SRC)%,$(OBJ)%,$(SUBDIRS))
 
 ## Libraries and include paths
-LIBS			:= -lraylibdll -lraylib
+LIBS			:= -lraylib -limgui# -lrlimgui
 SHARED			:= -L$(LIB)
-INCDIRS			:= -I$(INC) -I$(SRC)# -Iusr/include/
+INCDIRS			:= -I$(INC) -I$(SRC) -I$(INC)/raylib
 
 ## Tools
 MKDIR		:= mkdir -p

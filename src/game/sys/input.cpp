@@ -74,3 +74,96 @@ void SInput_t::updateOne(ECS::Entityid_t e, CInput_t& input) {
     //     }
     // }
 }
+
+// Anonymous functions
+
+CInput_t CreateFlyingCameraControls() {
+    CInput_t input {};
+
+    {
+        MouseDeltaAction_t action {
+            [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const Vector2f_t vector) {
+                const float sensibility = 0.1f;
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.rotation.add_x(vector.get_y() * sensibility * -1.0f);
+                transform.rotation.add_y(vector.get_x() * sensibility * -1.0f);
+            }
+        };
+
+        input.mouseDeltaActions.emplace_back(action);
+    }
+    {
+        InputAction_t action { 
+            Key_t::W
+        ,   KeyState_t::DOWN
+        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
+                transform.position += transform.rotation.forward();
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+    {
+        InputAction_t action { 
+            Key_t::A
+        ,   KeyState_t::DOWN
+        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
+                transform.position -= transform.rotation.right();
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+    {
+        InputAction_t action { 
+            Key_t::S
+        ,   KeyState_t::DOWN
+        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
+                transform.position -= transform.rotation.forward();
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+    {
+        InputAction_t action { 
+            Key_t::D
+        ,   KeyState_t::DOWN
+        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
+                transform.position += transform.rotation.right();
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+    {
+        InputAction_t action { 
+            Key_t::SPACE
+        ,   KeyState_t::DOWN
+        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
+                transform.position += Vector3f_t{0,1,0};
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+    {
+        InputAction_t action { 
+            Key_t::LEFT_CONTROL
+        ,   KeyState_t::DOWN
+        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
+                transform.position -= Vector3f_t{0,1,0};
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+
+    return input;
+}

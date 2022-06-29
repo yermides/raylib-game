@@ -5,11 +5,14 @@
 
 #include "helpers/vector3.hpp"
 
+#include <imgui/imgui.h>
+
 Game_t::Game_t() {
     Vector3f_t v1 {1,1,1};
     Vector3f_t v2 {2,3,4};
 
     std::cout << "Hello from Game!\n";
+    std::cout << ImGui::GetVersion() << "\n";
     Vector3f_t::print(v1 = v2);
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
@@ -33,9 +36,20 @@ void Game_t::loop() {
     // auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
     // CTransform_t& transform = EntMan.getComponent<CTransform_t>(ePlayer);
 
-    Factory.createFlyingCamera(CTransform_t{{0,15,-10}, {0,0,0}});
+    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,15,-10}, {0,0,0}});
 
     while (Render.isAlive()) {
+
+        if(Input.IsKeyPressed(Key_t::TAB)) {
+            if(EntMan.hasAllComponents<CInput_t>(camera)) {
+                EntMan.removeComponent<CInput_t>(camera);
+            } else {
+                EntMan.addComponent<CInput_t>(camera, CreateFlyingCameraControls());
+            }
+        }
+        
+        // EntMan.addComponent<CInput_t>(e, CreateFlyingCameraControls());
+
         Input.update(EntMan);
         Render.update(EntMan);
     }

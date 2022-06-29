@@ -17,6 +17,7 @@ struct SInput_t {
     bool IsKeyPressed(Key_t key) const;
     bool IsKeyReleased(Key_t key) const;
     Vector2f_t getMouseDelta() const;
+
 private:
     int getKeyValue(Key_t key) const;
     static void updateOne(ECS::Entityid_t e, CInput_t& input);
@@ -34,3 +35,7 @@ private:
         ,   { KeyState_t::RELEASED, [](SInput_t* Input, Key_t key) -> bool { return Input->IsKeyReleased(key); } }
     };
 };
+
+
+CInput_t CreateFlyingCameraControls();
+// namespace ComponentFunctions {}

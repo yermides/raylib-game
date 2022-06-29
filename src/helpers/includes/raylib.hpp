@@ -7,4 +7,5 @@
 
 namespace RL {
     #include <raylib/raylib.h>
+    #include <raylib/rlgl.h>
 }

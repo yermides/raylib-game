@@ -1,7 +1,14 @@
 #include "render.hpp"
 #include "helpers/includes/raylib.hpp"
 #include "helpers/adapters/vector.hpp"
+
+// #include <imgui/imgui_impl_raylib.h>
 #include <iostream>
+#include <imgui/imgui.h>
+
+namespace RL {
+    #include <imgui/rlImGui.h>
+}
 
 SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
     RL::SetConfigFlags(RL::FLAG_MSAA_4X_HINT | RL::FLAG_VSYNC_HINT);
@@ -15,14 +22,20 @@ SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
 
     RL::SetWindowState(stateFlags);
     RL::SetTargetFPS(120); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
-    RL::DisableCursor();
+    // RL::DisableCursor();
+
+    RL::rlImGuiSetup(true);
+
+
 
 //     if(flags & RenderFlags_t::ANTIALIASING) {
 
 // }
+
 }
 
 SRender_t::~SRender_t() {
+    RL::rlImGuiShutdown();
     RL::CloseWindow();
 }
 
@@ -43,7 +56,7 @@ void SRender_t::drawGizmo() {
     const RL::Vector3 start = {0,0,0};
     RL::DrawCylinderEx(start, {0,5,0}, 0.3, 0.3, 12, RL::GREEN);
     // RL::DrawCylinderWiresEx(start, {0,5,0}, 0.3, 0.3, 12, RL::WHITE);
-    RL::DrawCylinderEx(start, {5,0,0}, 0.3, 0.3, 12, RL::RED);
+    RL::DrawCylinderEx(start, {-5,0,0}, 0.3, 0.3, 12, RL::RED);
     // RL::DrawCylinderWiresEx(start, {5,0,0}, 0.3, 0.3, 12, RL::WHITE);
     RL::DrawCylinderEx(start, {0,0,5}, 0.3, 0.3, 12, RL::BLUE);
     // RL::DrawCylinderWiresEx(start, {0,0,5}, 0.3, 0.3, 12, RL::WHITE);
@@ -96,15 +109,24 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
 
 void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
     RL::BeginDrawing();
-        // RL::ClearBackground(RL::BLANK);
+    {
+        RL::rlImGuiBegin();
         RL::ClearBackground(RL::RAYWHITE);
+
         RL::BeginMode3D(rlcamera);
+        {
             EntMan.forAllMatching<CTransform_t, CModelRenderer_t>(updateOne);
             drawGizmo();
             // RL::DrawMesh(plane, RL::Material{}, RL::Matrix{});
             RL::DrawGrid(20, 10.0f);
+        }
         RL::EndMode3D();
+
         RL::DrawText("(c) Lucas Mataix Garrigós", 1600 - 200, 900 - 20, 10, RL::GRAY);
         RL::DrawFPS(10, 10);
+
+        ImGui::ShowDemoWindow();
+        RL::rlImGuiEnd();
+    }
     RL::EndDrawing();
 }
