@@ -9,25 +9,37 @@
 
 struct SInput_t {
     explicit SInput_t(const KeyBindings_t& bindings);
-
+    
     void update(ECS::EntityManager_t& EntMan);
 
     bool IsKeyDown(Key_t key) const;
     bool IsKeyUp(Key_t key) const;
     bool IsKeyPressed(Key_t key) const;
     bool IsKeyReleased(Key_t key) const;
-    Vector2f_t getMouseDelta() const;
 
+    bool IsMouseButtonPressed(MouseButton_t button) const;
+    bool IsMouseButtonDown(MouseButton_t button) const;
+    bool IsMouseButtonReleased(MouseButton_t button) const;
+    bool IsMouseButtonUp(MouseButton_t button) const;
+
+    Vector2f_t GetMousePosition(void) const;
+    Vector2f_t GetMouseDelta(void) const;
+
+    void ShowCursor(void);
+    void HideCursor(void);
+    bool IsCursorHidden(void);
+    void EnableCursor(void);
+    void DisableCursor(void);
+    bool IsCursorOnScreen(void);
 private:
     int getKeyValue(Key_t key) const;
-    static void updateOne(ECS::Entityid_t e, CInput_t& input);
+    int getMouseButtonValue(MouseButton_t button) const;
 
     // equivalence mapping provided by the keybindings
-    std::unordered_map<int, int> keyboard = {};
+    std::unordered_map<int, int> keyboard   = {};
+    std::unordered_map<int, int> mouse      = {};
 
-    // using callback = void(*)(SInput_t&, Key_t);
     using Callback_t = std::function<bool(SInput_t*, Key_t)>;
-
     inline static const std::unordered_map<KeyState_t, Callback_t> checks = {
             { KeyState_t::UP,       [](SInput_t* Input, Key_t key) -> bool { return Input->IsKeyUp(key); } }
         ,   { KeyState_t::DOWN,     [](SInput_t* Input, Key_t key) -> bool { return Input->IsKeyDown(key); } }
@@ -35,7 +47,6 @@ private:
         ,   { KeyState_t::RELEASED, [](SInput_t* Input, Key_t key) -> bool { return Input->IsKeyReleased(key); } }
     };
 };
-
 
 CInput_t CreateFlyingCameraControls();
 // namespace ComponentFunctions {}

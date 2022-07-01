@@ -55,8 +55,19 @@ APP			:= game
 ## Compiler data
 CC			:= g++
 C			:= gcc
-CCFLAGS		:= -Wall -pedantic -std=c++17#-std=c++2a -fconcepts# -O3
-CFLAGS		:= -Wall -pedantic
+CCFLAGS		:= \
+-Wall\
+-pedantic\
+-std=c++17\
+-O2\
+
+# -std=c++2a\ 
+# -fconcepts\
+# -O3\
+
+CFLAGS:= \
+-Wall\
+-pedantic\
 
 ## Base directories
 SRC			:= src
@@ -73,11 +84,11 @@ OBJ			:= winobj
 APP 		:= game.exe
 endif
 
-RELEASE		:= 1
+# RELEASE		:= 1
 
-ifdef RELEASE
-CCFLAGS 	+= -O2
-endif
+# ifdef RELEASE
+# CCFLAGS 	+= -O2
+# endif
 
 ## Found files
 ALLCPPS		:= $(shell find $(SRC)/ -type f -iname *.cpp)
@@ -88,9 +99,19 @@ SUBDIRS		:= $(shell find $(SRC) -type d)
 OBJSUBDIRS	:= $(patsubst $(SRC)%,$(OBJ)%,$(SUBDIRS))
 
 ## Libraries and include paths
-LIBS			:= -lraylib -limgui# -lrlimgui
-SHARED			:= -L$(LIB)
-INCDIRS			:= -I$(INC) -I$(SRC) -I$(INC)/raylib
+LIBS := \
+-lraylib\
+-limgui\
+-lLinearMath\
+-lBulletCollision\
+-lBulletDynamics\
+# -lrlimgui
+
+SHARED 	:= -L$(LIB)
+INCDIRS := \
+-I$(INC) \
+-I$(SRC) \
+-I$(INC)/raylib
 
 ## Tools
 MKDIR		:= mkdir -p

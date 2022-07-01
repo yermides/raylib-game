@@ -1,37 +1,28 @@
 #include "render.hpp"
+#include <iostream>
+#include <imgui/imgui.h>
 #include "helpers/includes/raylib.hpp"
 #include "helpers/adapters/vector.hpp"
 
-// #include <imgui/imgui_impl_raylib.h>
-#include <iostream>
-#include <imgui/imgui.h>
-
-namespace RL {
-    #include <imgui/rlImGui.h>
-}
-
 SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
-    RL::SetConfigFlags(RL::FLAG_MSAA_4X_HINT | RL::FLAG_VSYNC_HINT);
+    uint32_t configFlags = 0
+    |   RL::FLAG_MSAA_4X_HINT
+    |   RL::FLAG_VSYNC_HINT
+    ;
+
+    RL::SetConfigFlags(configFlags);
     RL::InitWindow(width, height, "My Raylib Game");
 
-    uint32_t stateFlags = 
-        RL::FLAG_WINDOW_RESIZABLE 
+    uint32_t stateFlags = 0
     // |   RL::FLAG_WINDOW_UNDECORATED
+    |   RL::FLAG_WINDOW_RESIZABLE
     |   RL::FLAG_WINDOW_RESIZABLE
     ;
 
     RL::SetWindowState(stateFlags);
     RL::SetTargetFPS(120); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
-    // RL::DisableCursor();
 
     RL::rlImGuiSetup(true);
-
-
-
-//     if(flags & RenderFlags_t::ANTIALIASING) {
-
-// }
-
 }
 
 SRender_t::~SRender_t() {
@@ -53,13 +44,9 @@ void SRender_t::drawGrid(int32_t divisions, float spacing) {
 }
 
 void SRender_t::drawGizmo() {
-    const RL::Vector3 start = {0,0,0};
-    RL::DrawCylinderEx(start, {0,5,0}, 0.3, 0.3, 12, RL::GREEN);
-    // RL::DrawCylinderWiresEx(start, {0,5,0}, 0.3, 0.3, 12, RL::WHITE);
-    RL::DrawCylinderEx(start, {-5,0,0}, 0.3, 0.3, 12, RL::RED);
-    // RL::DrawCylinderWiresEx(start, {5,0,0}, 0.3, 0.3, 12, RL::WHITE);
-    RL::DrawCylinderEx(start, {0,0,5}, 0.3, 0.3, 12, RL::BLUE);
-    // RL::DrawCylinderWiresEx(start, {0,0,5}, 0.3, 0.3, 12, RL::WHITE);
+    RL::DrawCylinderEx({0,0,0}, {0,5,0}, 0.3, 0.3, 12, RL::GREEN);
+    RL::DrawCylinderEx({0,0,0}, {-5,0,0}, 0.3, 0.3, 12, RL::RED);
+    RL::DrawCylinderEx({0,0,0}, {0,0,5}, 0.3, 0.3, 12, RL::BLUE);
 }
 
 float SRender_t::getDeltatime() {

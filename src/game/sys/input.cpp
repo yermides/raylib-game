@@ -3,6 +3,7 @@
 
 SInput_t::SInput_t(const KeyBindings_t& bindings) {
     keyboard = bindings.equivalences;
+    mouse = bindings.mouseequiv;
 }
 
 // TODO: clean this mess, it works but please...
@@ -21,7 +22,7 @@ void SInput_t::update(ECS::EntityManager_t& EntMan) {
         // Mouse delta actions
         for (auto& action : input.mouseDeltaActions) {
             if(action.callback) {
-                Vector2f_t mouseDelta = getMouseDelta();
+                Vector2f_t mouseDelta = GetMouseDelta();
                 action.callback(EntMan, e, mouseDelta);
             }
         }
@@ -50,9 +51,58 @@ bool SInput_t::IsKeyReleased(Key_t key) const {
     return RL::IsKeyReleased(equivalenceKey);
 }
 
-Vector2f_t SInput_t::getMouseDelta() const {
+bool SInput_t::IsMouseButtonPressed(MouseButton_t button) const {
+    int equivalenceButton = getMouseButtonValue(button);
+    return RL::IsMouseButtonPressed(equivalenceButton);
+}
+
+bool SInput_t::IsMouseButtonDown(MouseButton_t button) const {
+    int equivalenceButton = getMouseButtonValue(button);
+    return RL::IsMouseButtonDown(equivalenceButton);
+}
+
+bool SInput_t::IsMouseButtonReleased(MouseButton_t button) const {
+    int equivalenceButton = getMouseButtonValue(button);
+    return RL::IsMouseButtonReleased(equivalenceButton);
+}
+
+bool SInput_t::IsMouseButtonUp(MouseButton_t button) const {
+    int equivalenceButton = getMouseButtonValue(button);
+    return RL::IsMouseButtonUp(equivalenceButton);
+}
+
+Vector2f_t SInput_t::GetMousePosition(void) const {
+    RL::Vector2 mousePosition = RL::GetMousePosition();
+    return { mousePosition.x, mousePosition.y };
+}
+
+Vector2f_t SInput_t::GetMouseDelta(void) const {
     RL::Vector2 mouseDelta = RL::GetMouseDelta();
     return { mouseDelta.x, mouseDelta.y };
+}
+
+void SInput_t::ShowCursor(void) {
+    RL::ShowCursor(); // It has to be paired with EnableCursor I believe, due to Raylib's weirdness
+}
+
+void SInput_t::HideCursor(void) {
+    RL::HideCursor();
+}
+
+bool SInput_t::IsCursorHidden(void) {
+    return RL::IsCursorHidden();
+}
+
+void SInput_t::EnableCursor(void) {
+    RL::EnableCursor();
+}
+
+void SInput_t::DisableCursor(void) {
+    RL::DisableCursor();
+}
+
+bool SInput_t::IsCursorOnScreen(void) {
+    return RL::IsCursorOnScreen();
 }
 
 // Private
@@ -61,18 +111,8 @@ int SInput_t::getKeyValue(Key_t key) const {
     return keyboard.at(key);
 }
 
-void SInput_t::updateOne(ECS::Entityid_t e, CInput_t& input) {
-    // static std::unordered_map<int, std::function<bool()>> bindings = {
-    //     { 0, }
-    // }
-
-    // for (auto& action : input.actions) {
-    //     auto func = checks.at(action.requiredState);
-
-    //     if(func(*this, action.requiredKey) && ) {
-
-    //     }
-    // }
+int SInput_t::getMouseButtonValue(MouseButton_t button) const {
+    return mouse.at(button);
 }
 
 // Anonymous functions

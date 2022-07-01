@@ -1,11 +1,9 @@
 #include "game.hpp"
+#include <iostream>
+#include <imgui/imgui.h>
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/includes/raylib.hpp"
-#include <iostream>
-
 #include "helpers/vector3.hpp"
-
-#include <imgui/imgui.h>
 
 Game_t::Game_t() {
     Vector3f_t v1 {1,1,1};
@@ -29,8 +27,6 @@ Game_t::Game_t() {
     loop();
 }
 
-    // glm::lookAt({0,0,0});
-
 void Game_t::loop() {
     // const Vector3f_t offset = Vector3f_t{0,15,-20};
     // auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
@@ -39,6 +35,9 @@ void Game_t::loop() {
     ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,15,-10}, {0,0,0}});
 
     while (Render.isAlive()) {
+        if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
+            Input.IsCursorHidden() ? Input.EnableCursor() : Input.HideCursor();
+        }
 
         if(Input.IsKeyPressed(Key_t::TAB)) {
             if(EntMan.hasAllComponents<CInput_t>(camera)) {
@@ -48,45 +47,8 @@ void Game_t::loop() {
             }
         }
         
-        // EntMan.addComponent<CInput_t>(e, CreateFlyingCameraControls());
-
         Input.update(EntMan);
+        Physics.update(EntMan);
         Render.update(EntMan);
     }
 }
-
-
-/*
-        // cTransform.position = transform.position + offset;
-        // cCamera.target = transform.position;
-
-        cTransform.rotation += {0,1,0};
-        // cCamera.target = cTransform.rotation.forward(); 
-
-        if(Input.IsKeyDown(Key_t::W)) {
-            cTransform.position += cTransform.rotation.forward();
-        }
-
-        if(Input.IsKeyDown(Key_t::S)) {
-            cTransform.position -= cTransform.rotation.forward();
-        }
-
-        if(Input.IsKeyDown(Key_t::A)) {
-            cTransform.position -= cTransform.rotation.right();
-        }
-
-        if(Input.IsKeyDown(Key_t::D)) {
-            cTransform.position += cTransform.rotation.right();
-        }
-
-        if(Input.IsKeyDown(Key_t::SPACE)) {
-            cTransform.position += cTransform.rotation.up();
-        }
-
-        if(Input.IsKeyDown(Key_t::TAB)) {
-            cTransform.position -= cTransform.rotation.up();
-        }
-
-        // cCamera.target = {0,0,0};
-        // cCamera.target = cTransform.position + cTransform.rotation.forward();
-*/
