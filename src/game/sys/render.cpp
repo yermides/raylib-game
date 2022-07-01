@@ -53,6 +53,10 @@ float SRender_t::getDeltatime() {
     return RL::GetFrameTime();
 }
 
+void SRender_t::SetTargetFPS(uint32_t fps) {
+    RL::SetTargetFPS(fps);
+}
+
 void SRender_t::setMainCamera(ECS::ComponentRegistry_t& registry, ECS::Entityid_t camera) {
     mainCamera = camera;
     std::cout << "camera set!\n";
@@ -95,6 +99,8 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
 }
 
 void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
+    SCPhysicsDrawingContext_t& context = EntMan.getSingletonComponent<SCPhysicsDrawingContext_t>();
+
     RL::BeginDrawing();
     {
         RL::rlImGuiBegin();
@@ -104,6 +110,17 @@ void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
         {
             EntMan.forAllMatching<CTransform_t, CModelRenderer_t>(updateOne);
             drawGizmo();
+
+            if(context.lines) {
+                const std::vector<DebugLine3D_t>& lines = *(context.lines);
+
+                for(auto& line : lines) {
+                    Vector3f_t from = line.from;
+                    Vector3f_t to = line.to;
+
+                    RL::DrawLine3D(from, to, RL::GREEN);
+                }
+            }
             // RL::DrawMesh(plane, RL::Material{}, RL::Matrix{});
             RL::DrawGrid(20, 10.0f);
         }

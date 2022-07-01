@@ -1,18 +1,22 @@
 #pragma once
 #include <glm/glm.hpp>
-// #include <glm/ext/quaternion_trigonometric.hpp>
 #include <glm/gtx/string_cast.hpp>
+#include <bullet3/LinearMath/btVector3.h>
 #include "helpers/includes/raylib.hpp"
 #include <iostream>
 
 // Facade for glm::vec3
 struct Vector3f_t {
+    Vector3f_t(float px = 0.0f, float py = 0.0f, float pz = 0.0f) {
+        set(px, py, pz);
+    }
+
     Vector3f_t(const glm::vec3& pv) {
         set(pv);
     }
 
-    Vector3f_t(float px = 0.0f, float py = 0.0f, float pz = 0.0f) {
-        set(px, py, pz);
+    Vector3f_t(const btVector3& pv) {
+        set(pv.x(), pv.y(), pv.z());
     }
 
     Vector3f_t operator+(const Vector3f_t& other) {
@@ -51,8 +55,9 @@ struct Vector3f_t {
     }
 
     // implicit conversions with operators
-    operator RL::Vector3 () { return { v.x, v.y, v.z }; }
-    operator glm::vec3 () { return { v.x, v.y, v.z }; }
+    operator RL::Vector3()  { return { v.x, v.y, v.z }; }
+    operator glm::vec3()    { return { v.x, v.y, v.z }; }
+    operator btVector3()    { return { v.x, v.y, v.z }; }
 
     constexpr const glm::vec3& get() const { return v; }
     constexpr const float& get_x() const { return v.x; }

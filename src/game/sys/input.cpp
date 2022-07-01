@@ -123,10 +123,12 @@ CInput_t CreateFlyingCameraControls() {
     {
         MouseDeltaAction_t action {
             [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const Vector2f_t vector) {
-                const float sensibility = 0.1f;
+                const float sensibility = 0.15f;
                 CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
                 transform.rotation.add_x(vector.get_y() * sensibility * -1.0f);
                 transform.rotation.add_y(vector.get_x() * sensibility * -1.0f);
+                float clamped_pitch = std::clamp(transform.rotation.get_x(), -89.f, 89.f);
+                transform.rotation.set_x(clamped_pitch);
             }
         };
 

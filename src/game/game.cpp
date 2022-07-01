@@ -16,6 +16,7 @@ Game_t::Game_t() {
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
 
+
     // eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
     // ePlayer = Factory.createPlayer(CTransform_t{{0,0,10}});
 
@@ -28,11 +29,16 @@ Game_t::Game_t() {
 }
 
 void Game_t::loop() {
+    constexpr uint32_t kFPS = 120;
+    constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
+
+    Render.SetTargetFPS(kFPS);
     // const Vector3f_t offset = Vector3f_t{0,15,-20};
     // auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
     // CTransform_t& transform = EntMan.getComponent<CTransform_t>(ePlayer);
 
     ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,15,-10}, {0,0,0}});
+    const CInput_t cameraControls = CreateFlyingCameraControls();
 
     while (Render.isAlive()) {
         if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
@@ -43,12 +49,12 @@ void Game_t::loop() {
             if(EntMan.hasAllComponents<CInput_t>(camera)) {
                 EntMan.removeComponent<CInput_t>(camera);
             } else {
-                EntMan.addComponent<CInput_t>(camera, CreateFlyingCameraControls());
+                EntMan.addComponent<CInput_t>(camera, cameraControls);
             }
         }
         
         Input.update(EntMan);
-        Physics.update(EntMan);
+        Physics.update(EntMan, deltatime);
         Render.update(EntMan);
     }
 }

@@ -3,6 +3,7 @@
 #include "game/sys/helpers/all.hpp"
 #include "game/man/factory/factory.hpp"
 
+
 struct Game_t {
     explicit Game_t();
 

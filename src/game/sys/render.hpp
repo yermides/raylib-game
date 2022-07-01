@@ -18,6 +18,8 @@ struct SRender_t {
     void drawGizmo();
     float getDeltatime();
 
+    void SetTargetFPS(uint32_t fps);
+
     void setMainCamera(ECS::ComponentRegistry_t& registry, ECS::Entityid_t camera);
     void unloadModel(ECS::ComponentRegistry_t& registry, ECS::Entityid_t model);
 private:

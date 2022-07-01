@@ -109,9 +109,10 @@ LIBS := \
 
 SHARED 	:= -L$(LIB)
 INCDIRS := \
--I$(INC) \
--I$(SRC) \
--I$(INC)/raylib
+-I$(INC)\
+-I$(SRC)\
+-I$(INC)/raylib\
+-I$(INC)/bullet3\
 
 ## Tools
 MKDIR		:= mkdir -p
