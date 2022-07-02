@@ -6,16 +6,15 @@
 #include "helpers/vector3.hpp"
 
 Game_t::Game_t() {
-    Vector3f_t v1 {1,1,1};
-    Vector3f_t v2 {2,3,4};
-
-    std::cout << "Hello from Game!\n";
-    std::cout << ImGui::GetVersion() << "\n";
-    Vector3f_t::print(v1 = v2);
+    // Vector3f_t v1 {1,1,1};
+    // Vector3f_t v2 {2,3,4};
+    // std::cout << "Hello from Game!\n";
+    // std::cout << ImGui::GetVersion() << "\n";
+    // Vector3f_t::print(v1 = v2);
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
+    EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddToWorld>(Physics);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
-
 
     // eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
     // ePlayer = Factory.createPlayer(CTransform_t{{0,0,10}});
@@ -33,16 +32,16 @@ void Game_t::loop() {
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
-    // const Vector3f_t offset = Vector3f_t{0,15,-20};
-    // auto [cTransform, cCamera] = EntMan.getComponents<CTransform_t, CCamera_t>(eCamera);
-    // CTransform_t& transform = EntMan.getComponent<CTransform_t>(ePlayer);
 
-    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,15,-10}, {0,0,0}});
     const CInput_t cameraControls = CreateFlyingCameraControls();
+    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
+
+    Factory.createPhysicsPlane(CTransform_t{{0,50,0}});
 
     while (Render.isAlive()) {
         if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
-            Input.IsCursorHidden() ? Input.EnableCursor() : Input.HideCursor();
+            // Input.IsCursorHidden() ? Input.EnableCursor() : Input.HideCursor();
+            Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();
         }
 
         if(Input.IsKeyPressed(Key_t::TAB)) {

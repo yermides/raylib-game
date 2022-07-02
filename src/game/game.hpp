@@ -15,6 +15,4 @@ private:
     SInput_t Input { KeyBindings_t::RaylibBindings() };
     SPhysics_t Physics { Vector3f_t{ 0.0f, -9.81f, 0.0f } };
     EntityFactory_t Factory { EntMan };
-
-    ECS::Entityid_t eCamera, ePlayer;
 };

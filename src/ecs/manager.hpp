@@ -2,13 +2,16 @@
 #include <entt/entt.hpp>
 
 namespace ECS {
+    using NullEntityType_t = entt::null_t;
     using Entityid_t = entt::entity;
     using ComponentRegistry_t = entt::registry;
+    inline constexpr NullEntityType_t NullEntity = entt::null;
 
     struct EntityManager_t {
         explicit EntityManager_t(std::size_t size = 50) {
             m_singlecmpsStorage = m_singlecmpsRegistry.create();
             m_componentsRegistry.reserve(size);
+            m_componentsRegistry.ctx().emplace<EntityManager_t&>(*this);
         };
 
         EntityManager_t(EntityManager_t const&)             = delete;
@@ -20,12 +23,21 @@ namespace ECS {
             return m_componentsRegistry.create();
         }
 
+        inline bool isValid(Entityid_t e) const {
+            return m_componentsRegistry.valid(e);
+        }
+
         inline void destroyEntity(Entityid_t e) {
             m_componentsRegistry.destroy(e);
         }
 
         inline void destroyAllEntities(void) {
             m_componentsRegistry.clear();
+        }
+
+        template <typename Component_t>
+        constexpr bool hasComponent(Entityid_t e) {
+            return m_componentsRegistry.all_of<Component_t>(e);
         }
 
         template <typename... Args_t>

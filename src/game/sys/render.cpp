@@ -57,9 +57,19 @@ void SRender_t::SetTargetFPS(uint32_t fps) {
     RL::SetTargetFPS(fps);
 }
 
-void SRender_t::setMainCamera(ECS::ComponentRegistry_t& registry, ECS::Entityid_t camera) {
+void SRender_t::SetMainCamera(ECS::Entityid_t camera) {
     mainCamera = camera;
-    std::cout << "camera set!\n";
+}
+
+void SRender_t::setMainCamera(ECS::ComponentRegistry_t& registry, ECS::Entityid_t camera) {
+    const ECS::EntityManager_t& EntMan = registry.ctx().at<ECS::EntityManager_t>();
+
+    // set main camera only if there was none prior
+    if(!EntMan.isValid(mainCamera)) {
+        // SetMainCamera(camera);
+        mainCamera = camera;
+        std::cout << "camera set!\n";
+    }
 }
 
 void SRender_t::unloadModel(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {

@@ -10,6 +10,10 @@ struct EntityFactory_t {
     ECS::Entityid_t createCamera(const CTransform_t& ptransform = {});
     ECS::Entityid_t createFlyingCamera(const CTransform_t& ptransform = {});
     ECS::Entityid_t createStaticMesh(std::string_view filepath, const CTransform_t& ptransform = {});
+
+    // test for new physics components
+    ECS::Entityid_t createPhysicsPlane(const CTransform_t& ptransform = {});
+    ECS::Entityid_t createPhysicsBall(const CTransform_t& ptransform = {});
 private:
     ECS::EntityManager_t& EntMan;
 };

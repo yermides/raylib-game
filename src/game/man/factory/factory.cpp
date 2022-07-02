@@ -122,3 +122,26 @@ ECS::Entityid_t EntityFactory_t::createStaticMesh(std::string_view filepath, con
 
     return e;
 }
+
+
+ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransform) { 
+    ECS::Entityid_t e = EntMan.createEntity();
+
+    const CTransform_t& transform = EntMan.addComponent<CTransform_t>(e, ptransform);
+
+    CBoxCollider_t& collider = EntMan.addComponent<CBoxCollider_t>(e);
+    collider.boxHalfExtents = Vector3f_t{ 10.0f, 2.0f, 10.0f };
+
+    // CSphereCollider_t& collider = EntMan.addComponent<CSphereCollider_t>(e);
+
+    CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
+    body.type = BodyType_t::STATIC;
+    // body.type = BodyType_t::DYNAMIC;
+
+    return e;
+}
+
+ECS::Entityid_t EntityFactory_t::createPhysicsBall(const CTransform_t& ptransform) { 
+    ECS::Entityid_t e = EntMan.createEntity();
+    return e;
+}
