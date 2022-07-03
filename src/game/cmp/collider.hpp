@@ -18,3 +18,5 @@ struct CSphereCollider_t final : public CCollider_t {
 struct CCapsuleCollider_t final : public CCollider_t {
     float height { 2.0f }, radius { 0.5f };
 };
+
+// TODO: composite collider & stop the user from using multiple collider components (will use CCompositeCollider_t)

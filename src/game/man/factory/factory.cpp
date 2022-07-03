@@ -99,7 +99,7 @@ ECS::Entityid_t EntityFactory_t::createFlyingCamera(const CTransform_t& ptransfo
     }
     {
         CCamera_t& camera = EntMan.addComponent<CCamera_t>(e);
-        camera.fovy = 60.0f;
+        camera.fovy = 90.0f;
     }
     {
         EntMan.addComponent<CInput_t>(e, CreateFlyingCameraControls());
@@ -127,21 +127,50 @@ ECS::Entityid_t EntityFactory_t::createStaticMesh(std::string_view filepath, con
 ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransform) { 
     ECS::Entityid_t e = EntMan.createEntity();
 
-    const CTransform_t& transform = EntMan.addComponent<CTransform_t>(e, ptransform);
+    EntMan.addComponent<CTransform_t>(e, ptransform);
 
-    CBoxCollider_t& collider = EntMan.addComponent<CBoxCollider_t>(e);
-    collider.boxHalfExtents = Vector3f_t{ 10.0f, 2.0f, 10.0f };
-
-    // CSphereCollider_t& collider = EntMan.addComponent<CSphereCollider_t>(e);
-
-    CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
-    body.type = BodyType_t::STATIC;
-    // body.type = BodyType_t::DYNAMIC;
+    {
+        CBoxCollider_t& collider = EntMan.addComponent<CBoxCollider_t>(e);
+        collider.boxHalfExtents = Vector3f_t{ 20.0f, 2.0f, 20.0f };
+    }
+    {
+        CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
+        body.type = BodyType_t::STATIC;
+    }
 
     return e;
 }
 
 ECS::Entityid_t EntityFactory_t::createPhysicsBall(const CTransform_t& ptransform) { 
     ECS::Entityid_t e = EntMan.createEntity();
+
+    EntMan.addComponent<CTransform_t>(e, ptransform);
+
+    {
+        CSphereCollider_t& collider = EntMan.addComponent<CSphereCollider_t>(e);
+        collider.radius = 2.0f;
+    }
+    {
+        CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
+        body.type = BodyType_t::DYNAMIC;
+    }
+
+    return e;
+}
+
+ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform) {
+    ECS::Entityid_t e = EntMan.createEntity();
+
+    EntMan.addComponent<CTransform_t>(e, ptransform);
+
+    {
+        CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(e);
+        collider.radius = 0.5f;
+        collider.height = 2.0f;
+    }
+    {
+        // CCharacterController_t& controller = EntMan.addComponent<CCharacterController_t>(e);
+    }
+
     return e;
 }

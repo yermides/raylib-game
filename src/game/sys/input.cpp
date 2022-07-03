@@ -7,7 +7,7 @@ SInput_t::SInput_t(const KeyBindings_t& bindings) {
 }
 
 // TODO: clean this mess, it works but please...
-void SInput_t::update(ECS::EntityManager_t& EntMan) {
+void SInput_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
     auto lambda = [this, &EntMan](auto e, CInput_t& input) {
         // Keyboard input actions
         for (auto& action : input.actions) {

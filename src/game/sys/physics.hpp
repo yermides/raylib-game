@@ -15,8 +15,11 @@ struct SPhysics_t {
 
     // ECS Events
     void registerAddToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
+    void registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
 private:
     void addEntitiesToWorld(ECS::EntityManager_t& EntMan);
+    void addCharactersToWorld(ECS::EntityManager_t& EntMan);
+    void uploadDebugDrawContext(ECS::EntityManager_t& EntMan);
 
     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration;
     std::unique_ptr<btCollisionDispatcher> dispatcher;
@@ -25,5 +28,5 @@ private:
     std::unique_ptr<btDynamicsWorld> dynamicsWorld;
     std::unique_ptr<btIDebugDraw> debugDraw;
 
-    std::vector<ECS::Entityid_t> entitiesToAddWorld {};
+    std::vector<ECS::Entityid_t> entitiesToAddWorld {}, charactersToAddWorld {};
 };

@@ -28,10 +28,11 @@ SPhysics_t::~SPhysics_t() {
 		btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
 		btRigidBody* body = btRigidBody::upcast(obj);
 
-        collisionShapes.push_back(obj->getCollisionShape());
+        if(btCollisionShape* shape = obj->getCollisionShape(); shape) {
+            collisionShapes.push_back(shape);
+        }
 
 		if (body && body->getMotionState()) {
-            // collisionShapes.push_back(body->getCollisionShape());
 			delete body->getMotionState();
 		}
 
@@ -48,75 +49,27 @@ SPhysics_t::~SPhysics_t() {
 }
 
 void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
-    static bool firstUpdate = true;
+    auto lambda = [](auto e, CTransform_t& transform, const CRigidbody_t& rigidbody) {};
 
-    if(firstUpdate) {
-        /* one time code */
-        SCPhysicsDrawingContext_t& context = EntMan.getSingletonComponent<SCPhysicsDrawingContext_t>();
-        Bullet3PhysicsDrawer_t* bulletDrawer = (Bullet3PhysicsDrawer_t*)(debugDraw.get());
-        context.lines = &bulletDrawer->getLinesVector();
-        
-        { // bullet hello world
-            btCollisionShape* groundShape = new btBoxShape(btVector3(btScalar(30.), btScalar(5.), btScalar(30.)));
-            btTransform groundTransform;
-		    groundTransform.setIdentity();
-		    groundTransform.setOrigin(btVector3(0, 0, 0));
-            btScalar mass(0.);
-            bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0, 0, 0);
-            if (isDynamic)
-                groundShape->calculateLocalInertia(mass, localInertia);
-
-            //using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(groundTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, groundShape, localInertia);
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-            //add the body to the dynamics world
-            dynamicsWorld->addRigidBody(body);
-        }
-        {
-            //create a dynamic rigidbody
-
-            //btCollisionShape* colShape = new btBoxShape(btVector3(1,1,1));
-            btCollisionShape* colShape = new btSphereShape(btScalar(10.));
-
-            /// Create Dynamic Objects
-            btTransform startTransform;
-            startTransform.setIdentity();
-
-            btScalar mass(1.f);
-
-            //rigidbody is dynamic if and only if mass is non zero, otherwise static
-            bool isDynamic = (mass != 0.f);
-
-            btVector3 localInertia(0, 0, 0);
-            if (isDynamic)
-                colShape->calculateLocalInertia(mass, localInertia);
-
-            startTransform.setOrigin(btVector3(0, 50, 0));
-
-            //using motionstate is recommended, it provides interpolation capabilities, and only synchronizes 'active' objects
-            btDefaultMotionState* myMotionState = new btDefaultMotionState(startTransform);
-            btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, colShape, localInertia);
-            btRigidBody* body = new btRigidBody(rbInfo);
-
-            dynamicsWorld->addRigidBody(body);
-        }
-
-        firstUpdate = false;
-        std::cout << "just one time\n";
-    }
-
-    addEntitiesToWorld(EntMan);
+    addEntitiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
+    addCharactersToWorld(EntMan);
     dynamicsWorld->stepSimulation(deltatime, 10);
+
+    EntMan.forAllMatching<CTransform_t, const CRigidbody_t>(lambda);
+
     dynamicsWorld->debugDrawWorld();
+    uploadDebugDrawContext(EntMan);
 }
 
 void SPhysics_t::registerAddToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
     entitiesToAddWorld.emplace_back(e);
 }
+
+void SPhysics_t::registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    charactersToAddWorld.emplace_back(e);
+}
+
+// private functions
 
 void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
     for(const ECS::Entityid_t& e : entitiesToAddWorld) {
@@ -125,11 +78,14 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
             continue; // TODO: improve if so it doesn't completely ignore if it doesn't have shape
         }
 
+        // generate shape & body, and add body to world
+
         CCollider_t* col {}; // morph depending on the type
 
         auto [transform, rigidbody] = EntMan.getComponents<CTransform_t, CRigidbody_t>(e);
         btCollisionShape* collisionShape {};
 
+        // TODO: could be improved with template partial specialization
         if(EntMan.hasComponent<CBoxCollider_t>(e)) {
             CBoxCollider_t& collider = EntMan.getComponent<CBoxCollider_t>(e);
             col = &collider;
@@ -148,7 +104,7 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
         }
         
         btTransform bulletTransform;
-        bulletTransform.setIdentity();
+        bulletTransform.setIdentity(); // TODO: mimic rotation of transform.rotation
         bulletTransform.setOrigin(transform.position);
 
         // for bullet, bodies are automatically dynamic if they have mass, so enforce mass if type dynamic
@@ -175,6 +131,7 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
         btDefaultMotionState* myMotionState = new btDefaultMotionState(bulletTransform);
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
         btRigidBody* body = new btRigidBody(rbInfo);
+        body->setAngularFactor(rigidbody.angularFactor);
 
         col->runtimeBullet3CollisionShape = collisionShape;
         rigidbody.runtimeBullet3Body = body;
@@ -184,4 +141,21 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
     }
 
     entitiesToAddWorld.clear();
+}
+
+void SPhysics_t::addCharactersToWorld(ECS::EntityManager_t& EntMan) {
+    for(const ECS::Entityid_t& e : charactersToAddWorld) {
+        if(!EntMan.hasAllComponents<CCapsuleCollider_t, CCharacterController_t>(e)) { continue; }
+
+        // auto [collider, controller] = EntMan.getComponents<CCapsuleCollider_t, CCharacterController_t>(e);
+        // TODO: continue
+    }
+
+    charactersToAddWorld.clear();
+}
+
+void SPhysics_t::uploadDebugDrawContext(ECS::EntityManager_t& EntMan) {
+    SCPhysicsDrawingContext_t& context = EntMan.getSingletonComponent<SCPhysicsDrawingContext_t>();
+    Bullet3PhysicsDrawer_t* bulletDrawer = (Bullet3PhysicsDrawer_t*)(debugDraw.get());
+    context.lines = &bulletDrawer->getLinesVector();
 }

@@ -14,6 +14,7 @@ Game_t::Game_t() {
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddToWorld>(Physics);
+    EntMan.connectOnContruct<CCharacterController_t, &SPhysics_t::registerAddCharacterToWorld>(Physics);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
 
     // eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
@@ -32,11 +33,25 @@ void Game_t::loop() {
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
+    Input.DisableCursor();
 
     const CInput_t cameraControls = CreateFlyingCameraControls();
     ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
 
-    Factory.createPhysicsPlane(CTransform_t{{0,50,0}});
+    Factory.createPhysicsPlane(CTransform_t{{0,0,0}});
+    // these 4 are just 4 fun, to create edges around the platform
+    Factory.createPhysicsPlane(CTransform_t{{40,4,0}});
+    Factory.createPhysicsPlane(CTransform_t{{-40,4,0}});
+    Factory.createPhysicsPlane(CTransform_t{{0,4,40}});
+    Factory.createPhysicsPlane(CTransform_t{{0,4,-40}});
+
+    // change x
+    const float separation = 1.5f;
+    Factory.createPhysicsBall(CTransform_t{{separation,26,0}});
+    Factory.createPhysicsBall(CTransform_t{{-separation,28,0}});
+    // change z
+    Factory.createPhysicsBall(CTransform_t{{0,30,separation}});
+    Factory.createPhysicsBall(CTransform_t{{0,32,-separation}});
 
     while (Render.isAlive()) {
         if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
@@ -52,7 +67,7 @@ void Game_t::loop() {
             }
         }
         
-        Input.update(EntMan);
+        Input.update(EntMan,deltatime);
         Physics.update(EntMan, deltatime);
         Render.update(EntMan);
     }

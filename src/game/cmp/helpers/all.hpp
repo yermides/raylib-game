@@ -9,3 +9,4 @@
 #include "../rigidbody.hpp"
 #include "../sprite.hpp"
 #include "../physics_draw_ctx.hpp"
+#include "../character.hpp"

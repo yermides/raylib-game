@@ -10,7 +10,7 @@
 struct SInput_t {
     explicit SInput_t(const KeyBindings_t& bindings);
     
-    void update(ECS::EntityManager_t& EntMan);
+    void update(ECS::EntityManager_t& EntMan, const float deltatime);
 
     bool IsKeyDown(Key_t key) const;
     bool IsKeyUp(Key_t key) const;
@@ -28,8 +28,8 @@ struct SInput_t {
     void ShowCursor(void);
     void HideCursor(void);
     bool IsCursorHidden(void);
-    void EnableCursor(void);
-    void DisableCursor(void);
+    void EnableCursor(void); // unlocks cursor
+    void DisableCursor(void); // locks cursor
     bool IsCursorOnScreen(void);
 private:
     int getKeyValue(Key_t key) const;

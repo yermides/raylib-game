@@ -5,6 +5,7 @@
 #include "helpers/vector2.hpp"
 
 struct InputAction_t {
+    // TODO: change signature so it accepts deltatime as const float
     using Callback_t = std::function<void(ECS::EntityManager_t&, ECS::Entityid_t)>; 
 
     Key_t requiredKey;

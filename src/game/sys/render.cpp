@@ -45,8 +45,16 @@ void SRender_t::drawGrid(int32_t divisions, float spacing) {
 
 void SRender_t::drawGizmo() {
     RL::DrawCylinderEx({0,0,0}, {0,5,0}, 0.3, 0.3, 12, RL::GREEN);
-    RL::DrawCylinderEx({0,0,0}, {-5,0,0}, 0.3, 0.3, 12, RL::RED);
+    RL::DrawCylinderEx({0,5,0}, {0,6,0}, .5, 0, 12, RL::GREEN);
+
+    RL::DrawCylinderEx({0,0,0}, {5,0,0}, 0.3, 0.3, 12, RL::RED);
+    RL::DrawCylinderEx({5,0,0}, {6,0,0}, .5, 0, 12, RL::RED);
+
     RL::DrawCylinderEx({0,0,0}, {0,0,5}, 0.3, 0.3, 12, RL::BLUE);
+    RL::DrawCylinderEx({0,0,5}, {0,0,6}, .5, 0, 12, RL::BLUE);
+
+    // RL::DrawTriangle3D({1.2,5,0},{-1.2,5,0},{0,6.2,0}, RL::GREEN);
+
 }
 
 float SRender_t::getDeltatime() {
@@ -128,7 +136,7 @@ void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
                     Vector3f_t from = line.from;
                     Vector3f_t to = line.to;
 
-                    RL::DrawLine3D(from, to, RL::GREEN);
+                    RL::DrawLine3D(from, to, RL::VIOLET);
                 }
             }
             // RL::DrawMesh(plane, RL::Material{}, RL::Matrix{});
@@ -136,10 +144,10 @@ void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
         }
         RL::EndMode3D();
 
-        RL::DrawText("(c) Lucas Mataix Garrigós", 1600 - 200, 900 - 20, 10, RL::GRAY);
+        RL::DrawText("Lucas Mataix Garrigós", 1920 - 276, 1080 - 28, 24, RL::GRAY);
         RL::DrawFPS(10, 10);
 
-        ImGui::ShowDemoWindow();
+        // ImGui::ShowDemoWindow();
         RL::rlImGuiEnd();
     }
     RL::EndDrawing();
