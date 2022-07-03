@@ -55,9 +55,12 @@ struct Vector3f_t {
     }
 
     // implicit conversions with operators
-    operator RL::Vector3()  { return { v.x, v.y, v.z }; }
-    operator glm::vec3()    { return { v.x, v.y, v.z }; }
-    operator btVector3()    { return { v.x, v.y, v.z }; }
+    constexpr operator RL::Vector3()        { return { v.x, v.y, v.z }; }
+    constexpr operator RL::Vector3() const  { return { v.x, v.y, v.z }; }
+    constexpr operator glm::vec3()          { return { v.x, v.y, v.z }; }
+    constexpr operator glm::vec3() const    { return { v.x, v.y, v.z }; }
+    inline operator btVector3()             { return { v.x, v.y, v.z }; }
+    inline operator btVector3() const       { return { v.x, v.y, v.z }; }
 
     constexpr const glm::vec3& get() const { return v; }
     constexpr const float& get_x() const { return v.x; }

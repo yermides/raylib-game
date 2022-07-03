@@ -15,7 +15,7 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     ,   collisionConfiguration.get()
     );
 
-    dynamicsWorld->setGravity({ gravity.get_x(), gravity.get_y(), gravity.get_z() });
+    dynamicsWorld->setGravity(gravity);
 
     debugDraw = std::make_unique<Bullet3PhysicsDrawer_t>();
     dynamicsWorld->setDebugDrawer(debugDraw.get());
@@ -155,7 +155,63 @@ void SPhysics_t::addCharactersToWorld(ECS::EntityManager_t& EntMan) {
 }
 
 void SPhysics_t::uploadDebugDrawContext(ECS::EntityManager_t& EntMan) {
-    SCPhysicsDrawingContext_t& context = EntMan.getSingletonComponent<SCPhysicsDrawingContext_t>();
+    // if(!debugDraw.get()) return;
+
     Bullet3PhysicsDrawer_t* bulletDrawer = (Bullet3PhysicsDrawer_t*)(debugDraw.get());
+    SCPhysicsDrawingContext_t& context = EntMan.getSingletonComponent<SCPhysicsDrawingContext_t>();
     context.lines = &bulletDrawer->getLinesVector();
+}
+
+// Private Anonymous Functions
+
+btRigidBody& GetBullet3Rigidbody(const CRigidbody_t& rigidbody) {
+    btRigidBody& bullet3body = *(static_cast<btRigidBody*>(rigidbody.runtimeBullet3Body));
+    return bullet3body;
+}
+
+// Public Anonymous Functions TODO: there are more, add all of them
+
+void ApplyForce(CRigidbody_t& rigidbody, const Vector3f_t& force, const Vector3f_t& relativePosition) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.applyForce(force, relativePosition);
+}
+
+void ApplyCentralForce(CRigidbody_t& rigidbody, const Vector3f_t& force) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.applyCentralForce(force);
+}
+
+void ApplyTorque(CRigidbody_t& rigidbody, const Vector3f_t& torque) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.applyTorque(torque);
+}
+
+void ApplyImpulse(CRigidbody_t& rigidbody, const Vector3f_t& impulse, const Vector3f_t& relativePosition) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.applyImpulse(impulse, relativePosition);
+}
+
+void ApplyCentralImpulse(CRigidbody_t& rigidbody, const Vector3f_t& force) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.applyCentralImpulse(force);
+}
+
+void SetLinearVelocity(CRigidbody_t& rigidbody, const Vector3f_t& velocity) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.setLinearVelocity(velocity);
+}
+
+void SetAngularVelocity(CRigidbody_t& rigidbody, const Vector3f_t& velocity) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.setAngularVelocity(velocity);
+}
+
+void Translate(CRigidbody_t& rigidbody, const Vector3f_t& movement) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.translate(movement);
+}
+
+void ClearForces(CRigidbody_t& rigidbody) {
+    btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+    bullet3body.clearForces();
 }

@@ -40,10 +40,10 @@ void Game_t::loop() {
 
     Factory.createPhysicsPlane(CTransform_t{{0,0,0}});
     // these 4 are just 4 fun, to create edges around the platform
-    Factory.createPhysicsPlane(CTransform_t{{40,4,0}});
-    Factory.createPhysicsPlane(CTransform_t{{-40,4,0}});
-    Factory.createPhysicsPlane(CTransform_t{{0,4,40}});
-    Factory.createPhysicsPlane(CTransform_t{{0,4,-40}});
+    // Factory.createPhysicsPlane(CTransform_t{{40,4,0}});
+    // Factory.createPhysicsPlane(CTransform_t{{-40,4,0}});
+    // Factory.createPhysicsPlane(CTransform_t{{0,4,40}});
+    // Factory.createPhysicsPlane(CTransform_t{{0,4,-40}});
 
     // change x
     const float separation = 1.5f;
@@ -52,6 +52,9 @@ void Game_t::loop() {
     // change z
     Factory.createPhysicsBall(CTransform_t{{0,30,separation}});
     Factory.createPhysicsBall(CTransform_t{{0,32,-separation}});
+
+    ECS::Entityid_t character = Factory.createCharacter(CTransform_t{{0,50,0}});
+    CRigidbody_t& characterBody = EntMan.getComponent<CRigidbody_t>(character);
 
     while (Render.isAlive()) {
         if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
@@ -65,6 +68,27 @@ void Game_t::loop() {
             } else {
                 EntMan.addComponent<CInput_t>(camera, cameraControls);
             }
+        }
+
+        if(Input.IsKeyDown(Key_t::KUP)) {
+            std::cout << "KUP!\n";
+            // ApplyCentralForce(characterBody, Vector3f_t{0,0,100});
+            Translate(characterBody, Vector3f_t{0,0,5 * deltatime});
+        }
+        if(Input.IsKeyDown(Key_t::KDOWN)) {
+            // ApplyCentralForce(characterBody, Vector3f_t{0,0,-100});
+            Translate(characterBody, Vector3f_t{0,0,-5 * deltatime});
+            std::cout << "KDOWN!\n";
+        }
+        if(Input.IsKeyDown(Key_t::KLEFT)) {
+            // ApplyCentralForce(characterBody, Vector3f_t{100,0,0});
+            Translate(characterBody, Vector3f_t{5 * deltatime,0,0});
+            std::cout << "KLEFT!\n";
+        }
+        if(Input.IsKeyDown(Key_t::KRIGHT)) {
+            // ApplyCentralForce(characterBody, Vector3f_t{-100,0,0});
+            Translate(characterBody, Vector3f_t{-5 * deltatime,0,0});
+            std::cout << "KRIGHT!\n";
         }
         
         Input.update(EntMan,deltatime);

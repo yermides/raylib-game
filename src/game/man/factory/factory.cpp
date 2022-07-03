@@ -170,6 +170,9 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
     }
     {
         // CCharacterController_t& controller = EntMan.addComponent<CCharacterController_t>(e);
+        CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
+        body.type = BodyType_t::DYNAMIC;
+        body.angularFactor = {0,1,0};
     }
 
     return e;
