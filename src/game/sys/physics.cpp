@@ -1,6 +1,11 @@
 #include "physics.hpp"
+#include <bullet3/btBulletCollisionCommon.h>
+#include <bullet3/btBulletDynamicsCommon.h>
+#include "helpers/vector3.hpp"
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/physics_drawer.hpp"
+
+btRigidBody& GetBullet3Rigidbody(const CRigidbody_t& rigidbody); // declaration
 
 SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     collisionConfiguration  = std::make_unique<btDefaultCollisionConfiguration>();
@@ -49,13 +54,29 @@ SPhysics_t::~SPhysics_t() {
 }
 
 void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
-    auto lambda = [](auto e, CTransform_t& transform, const CRigidbody_t& rigidbody) {};
+    // Update transform with rigidbody's transform
+    auto lambda = [this](auto e, CTransform_t& transform, CRigidbody_t& rigidbody) {
+        btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
+
+        // copy translation
+        transform.position = bullet3body.getWorldTransform().getOrigin();
+        // TODO: use offset, and also copy rotation
+
+        float x {}, y {}, z {};
+        btQuaternion orientation = bullet3body.getWorldTransform().getRotation();
+        orientation.getEulerZYX(z, y, x);
+        x = btDegrees(x);
+        y = btDegrees(y);
+        z = btDegrees(z);
+
+        transform.rotation.set(x, y, z);
+    };
 
     addEntitiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
     addCharactersToWorld(EntMan);
     dynamicsWorld->stepSimulation(deltatime, 10);
 
-    EntMan.forAllMatching<CTransform_t, const CRigidbody_t>(lambda);
+    EntMan.forAllMatching<CTransform_t, CRigidbody_t>(lambda);
 
     dynamicsWorld->debugDrawWorld();
     uploadDebugDrawContext(EntMan);
@@ -112,7 +133,7 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
             if(rigidbody.mass == 0.0f) {
                 rigidbody.mass = 1.0f;
             }
-        } else { // also do the inverse if not kinematic
+        } else { // also do the inverse if not dynamic
             if(rigidbody.mass > 0.0f) {
                 rigidbody.mass = 0.0f;
             }
@@ -127,11 +148,24 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
             collisionShape->calculateLocalInertia(mass, localInertia);
         }
 
-        //using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
+        // Using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
         btDefaultMotionState* myMotionState = new btDefaultMotionState(bulletTransform);
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
         btRigidBody* body = new btRigidBody(rbInfo);
         body->setAngularFactor(rigidbody.angularFactor);
+
+        if(rigidbody.type == BodyType_t::STATIC) {
+	        body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_STATIC_OBJECT); 
+        } else if(rigidbody.type == BodyType_t::KINEMATIC) {
+	        body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT); 
+            
+            // in reality needed but if done, I'd need to override btDefaultMotionState with my own, see bullet docs p21 & p22
+	        // body->setActivationState(DISABLE_DEACTIVATION); 
+        } else {
+	        body->setCollisionFlags(body->getCollisionFlags() | btCollisionObject::CF_DYNAMIC_OBJECT); 
+        }
+
+        // TODO: collision flags and group
 
         col->runtimeBullet3CollisionShape = collisionShape;
         rigidbody.runtimeBullet3Body = body;

@@ -1,13 +1,17 @@
 #include "render.hpp"
 #include <iostream>
+#include <cstring>
 #include <imgui/imgui.h>
 #include "helpers/includes/raylib.hpp"
 #include "helpers/adapters/vector.hpp"
+#include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
     uint32_t configFlags = 0
-    |   RL::FLAG_MSAA_4X_HINT
-    |   RL::FLAG_VSYNC_HINT
+    // |   RL::FLAG_MSAA_4X_HINT
+    // |   RL::FLAG_VSYNC_HINT
     ;
 
     RL::SetConfigFlags(configFlags);
@@ -15,7 +19,6 @@ SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
 
     uint32_t stateFlags = 0
     // |   RL::FLAG_WINDOW_UNDECORATED
-    |   RL::FLAG_WINDOW_RESIZABLE
     |   RL::FLAG_WINDOW_RESIZABLE
     ;
 
@@ -85,13 +88,32 @@ void SRender_t::unloadModel(ECS::ComponentRegistry_t& registry, ECS::Entityid_t 
     RL::UnloadModel(model.model);
 }
 
-// private 
+// private
 
 void SRender_t::updateOne(ECS::Entityid_t entity, CTransform_t& transform, CModelRenderer_t& model) {
-    // model.model.transform
-    // RL::DrawModelEx
-    RL::DrawModel(model.model, transform.position, transform.scale.get_x(), RL::WHITE); // TODO: improve
-    // std::cout << "updating one tr & model\n";
+    // FIXME: clean this mess pls, even if it works
+    RL::Matrix matrix = RL::MatrixIdentity();
+
+    // RL::Matrix translate = RL::MatrixTranslate(
+    //     transform.position.get_x()
+    // ,   transform.position.get_y()
+    // ,   transform.position.get_z()
+    // );
+
+    RL::Matrix rotate = RL::MatrixRotateXYZ({
+        glm::radians(-transform.rotation.get_x())
+    ,   glm::radians(transform.rotation.get_y())
+    ,   glm::radians(-transform.rotation.get_z())
+    });
+
+    RL::Matrix scale = RL::MatrixScale(transform.scale.get_x(), transform.scale.get_y(), transform.scale.get_z());
+
+    // matrix = RL::MatrixMultiply(matrix, translate);
+    matrix = RL::MatrixMultiply(matrix, rotate);
+    matrix = RL::MatrixMultiply(matrix, scale);
+    model.model.transform = matrix;
+
+    RL::DrawModel(model.model, transform.position, 1, RL::WHITE); // TODO: improve
 }
 
 void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& camera) {
@@ -101,12 +123,12 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
         camera.position = transform.position;
         // camera.target = cmp_cam->target; // TODO: put this in the camera system
         camera.target = transform.position + transform.rotation.forward();
-        
+
         camera.up = cmp_cam->up;
         camera.fovy = cmp_cam->fovy;
         camera.projection = RL::CAMERA_PERSPECTIVE;
     } else { // if no camera component in scene, use these default values
-        camera.position = { 50.0f, 50.0f, 50.0f }; 
+        camera.position = { 50.0f, 50.0f, 50.0f };
         camera.target = { 0.0f, 0.0f, 0.0f };
         camera.up = { 0.0f, 1.0f, 0.0f };
         camera.fovy = 45.0f;

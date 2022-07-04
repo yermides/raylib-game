@@ -53,7 +53,7 @@ void Game_t::loop() {
     Factory.createPhysicsBall(CTransform_t{{0,30,separation}});
     Factory.createPhysicsBall(CTransform_t{{0,32,-separation}});
 
-    ECS::Entityid_t character = Factory.createCharacter(CTransform_t{{0,50,0}});
+    ECS::Entityid_t character = Factory.createCharacter(CTransform_t{{0,4,0}});
     CRigidbody_t& characterBody = EntMan.getComponent<CRigidbody_t>(character);
 
     while (Render.isAlive()) {
@@ -69,26 +69,29 @@ void Game_t::loop() {
                 EntMan.addComponent<CInput_t>(camera, cameraControls);
             }
         }
+        {
+            constexpr float vel = 10.0f;
 
-        if(Input.IsKeyDown(Key_t::KUP)) {
-            std::cout << "KUP!\n";
-            // ApplyCentralForce(characterBody, Vector3f_t{0,0,100});
-            Translate(characterBody, Vector3f_t{0,0,5 * deltatime});
-        }
-        if(Input.IsKeyDown(Key_t::KDOWN)) {
-            // ApplyCentralForce(characterBody, Vector3f_t{0,0,-100});
-            Translate(characterBody, Vector3f_t{0,0,-5 * deltatime});
-            std::cout << "KDOWN!\n";
-        }
-        if(Input.IsKeyDown(Key_t::KLEFT)) {
-            // ApplyCentralForce(characterBody, Vector3f_t{100,0,0});
-            Translate(characterBody, Vector3f_t{5 * deltatime,0,0});
-            std::cout << "KLEFT!\n";
-        }
-        if(Input.IsKeyDown(Key_t::KRIGHT)) {
-            // ApplyCentralForce(characterBody, Vector3f_t{-100,0,0});
-            Translate(characterBody, Vector3f_t{-5 * deltatime,0,0});
-            std::cout << "KRIGHT!\n";
+            if(Input.IsKeyDown(Key_t::KUP)) {
+                std::cout << "KUP!\n";
+                // ApplyCentralForce(characterBody, Vector3f_t{0,0,100});
+                Translate(characterBody, Vector3f_t{0,0,vel * deltatime});
+            }
+            if(Input.IsKeyDown(Key_t::KDOWN)) {
+                std::cout << "KDOWN!\n";
+                // ApplyCentralForce(characterBody, Vector3f_t{0,0,-100});
+                Translate(characterBody, Vector3f_t{0,0,-vel * deltatime});
+            }
+            if(Input.IsKeyDown(Key_t::KLEFT)) {
+                std::cout << "KLEFT!\n";
+                // ApplyCentralForce(characterBody, Vector3f_t{100,0,0});
+                Translate(characterBody, Vector3f_t{vel * deltatime,0,0});
+            }
+            if(Input.IsKeyDown(Key_t::KRIGHT)) {
+                std::cout << "KRIGHT!\n";
+                // ApplyCentralForce(characterBody, Vector3f_t{-100,0,0});
+                Translate(characterBody, Vector3f_t{-vel * deltatime,0,0});
+            }
         }
         
         Input.update(EntMan,deltatime);
