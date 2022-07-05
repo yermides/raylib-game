@@ -61,9 +61,15 @@ CCFLAGS		:= \
 -std=c++17\
 -O2\
 
+# --threads=win32\
 # -std=c++2a\ 
 # -fconcepts\
 # -O3\
+
+ifdef LOGS
+CCFLAGS += -D USE_GAME_LOGGING_SYSTEM=1
+endif
+# turn off USE_GAME_LOGGING_SYSTEM to disable logs (and to get faster compile time & lower exe size)
 
 CFLAGS:= \
 -Wall\
@@ -105,7 +111,9 @@ LIBS := \
 -lLinearMath\
 -lBulletCollision\
 -lBulletDynamics\
-# -lrlimgui
+# -lwinpthread\
+# -lpthread\
+# -lrlimgui\
 
 SHARED 	:= -L$(LIB)
 INCDIRS := \
@@ -113,6 +121,7 @@ INCDIRS := \
 -I$(SRC)\
 -I$(INC)/raylib\
 -I$(INC)/bullet3\
+# -I$(INC)/spdlog\
 
 ## Tools
 MKDIR		:= mkdir -p

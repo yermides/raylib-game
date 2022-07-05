@@ -4,11 +4,19 @@
 #include <imgui/imgui.h>
 #include "helpers/includes/raylib.hpp"
 #include "helpers/adapters/vector.hpp"
-#include <glm/gtc/matrix_transform.hpp>
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/quaternion.hpp>
+#include "helpers/logger.hpp"
+
+// #include <glm/gtc/matrix_transform.hpp>
+// #define GLM_ENABLE_EXPERIMENTAL
+// #include <glm/gtx/quaternion.hpp>
 
 SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
+    #ifndef USE_GAME_LOGGING_SYSTEM
+        RL::SetTraceLogLevel(RL::LOG_NONE);
+    #else
+        // RL::SetTraceLogLevel(RL::LOG_ALL);
+    #endif
+
     uint32_t configFlags = 0
     // |   RL::FLAG_MSAA_4X_HINT
     // |   RL::FLAG_VSYNC_HINT
@@ -23,9 +31,10 @@ SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
     ;
 
     RL::SetWindowState(stateFlags);
-    RL::SetTargetFPS(120); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
+    // RL::SetTargetFPS(120); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
 
     RL::rlImGuiSetup(true);
+
 }
 
 SRender_t::~SRender_t() {
@@ -79,7 +88,7 @@ void SRender_t::setMainCamera(ECS::ComponentRegistry_t& registry, ECS::Entityid_
     if(!EntMan.isValid(mainCamera)) {
         // SetMainCamera(camera);
         mainCamera = camera;
-        std::cout << "camera set!\n";
+        LOG_CORE_INFO("Camera with id = {} set as main camera", static_cast<ENTT_ID_TYPE>(camera));
     }
 }
 
@@ -166,7 +175,17 @@ void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
         }
         RL::EndMode3D();
 
-        RL::DrawText("Lucas Mataix Garrigós", 1920 - 276, 1080 - 28, 24, RL::GRAY);
+        RL::DrawTextPro(
+            RL::GetFontDefault()
+        ,   "Lucas Mataix Garrigós"
+        ,   {1920 - 276, 1080 - 28}
+        ,   {0,0}
+        ,   0
+        ,   24
+        ,   2
+        ,   RL::GRAY
+        );
+
         RL::DrawFPS(10, 10);
 
         // ImGui::ShowDemoWindow();

@@ -4,6 +4,7 @@
 #include "helpers/vector3.hpp"
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/physics_drawer.hpp"
+#include "helpers/logger.hpp"
 
 btRigidBody& GetBullet3Rigidbody(const CRigidbody_t& rigidbody); // declaration
 
@@ -111,17 +112,17 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
             CBoxCollider_t& collider = EntMan.getComponent<CBoxCollider_t>(e);
             col = &collider;
             collisionShape = new btBoxShape(collider.boxHalfExtents);
-            std::cout << "CBoxCollider_t\n";
+            LOG_CORE_INFO("CollisionShape created as CBoxCollider_t");
         } else if (EntMan.hasComponent<CSphereCollider_t>(e)) {
             CSphereCollider_t& collider = EntMan.getComponent<CSphereCollider_t>(e);
             col = &collider;
             collisionShape = new btSphereShape(collider.radius);
-            std::cout << "CSphereCollider_t\n";
+            LOG_CORE_INFO("CollisionShape created as CSphereCollider_t");
         } else if (EntMan.hasComponent<CCapsuleCollider_t>(e)) {
             CCapsuleCollider_t& collider = EntMan.getComponent<CCapsuleCollider_t>(e);
             col = &collider;
             collisionShape = new btCapsuleShape(collider.radius, collider.height);
-            std::cout << "CCapsuleCollider_t\n";
+            LOG_CORE_INFO("CollisionShape created as CCapsuleCollider_t");
         }
         
         btTransform bulletTransform;
@@ -172,6 +173,8 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
 
         //add the body to the dynamics world
         dynamicsWorld->addRigidBody(body);
+
+        LOG_CORE_INFO("Rigidbody successfully created and added to world");
     }
 
     entitiesToAddWorld.clear();

@@ -4,8 +4,11 @@
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/includes/raylib.hpp"
 #include "helpers/vector3.hpp"
+#include "helpers/logger.hpp"
 
 Game_t::Game_t() {
+    LOG_INIT();
+
     // Vector3f_t v1 {1,1,1};
     // Vector3f_t v2 {2,3,4};
     // std::cout << "Hello from Game!\n";
@@ -24,8 +27,6 @@ Game_t::Game_t() {
     // Factory.createPlayer(Vector3f{0,0,0});
     // Factory.createPlayer(CTransform_t{{10,0,5}, {0,0,0}, {4,4,4}});
     // Factory.createStaticMesh("assets/scene.gltf", {{},{},{.1,.1,.1}});
-
-    loop();
 }
 
 void Game_t::loop() {
@@ -36,9 +37,9 @@ void Game_t::loop() {
     Input.DisableCursor();
 
     const CInput_t cameraControls = CreateFlyingCameraControls();
-    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
 
     Factory.createPhysicsPlane(CTransform_t{{0,0,0}});
+    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
     // these 4 are just 4 fun, to create edges around the platform
     // Factory.createPhysicsPlane(CTransform_t{{40,4,0}});
     // Factory.createPhysicsPlane(CTransform_t{{-40,4,0}});
@@ -46,7 +47,7 @@ void Game_t::loop() {
     // Factory.createPhysicsPlane(CTransform_t{{0,4,-40}});
 
     // change x
-    const float separation = 1.5f;
+    const float separation = 4.5f;
     Factory.createPhysicsBall(CTransform_t{{separation,26,0}});
     Factory.createPhysicsBall(CTransform_t{{-separation,28,0}});
     // change z
@@ -73,22 +74,22 @@ void Game_t::loop() {
             constexpr float vel = 10.0f;
 
             if(Input.IsKeyDown(Key_t::KUP)) {
-                std::cout << "KUP!\n";
+                // LOG_INFO("KUP!");
                 // ApplyCentralForce(characterBody, Vector3f_t{0,0,100});
                 Translate(characterBody, Vector3f_t{0,0,vel * deltatime});
             }
             if(Input.IsKeyDown(Key_t::KDOWN)) {
-                std::cout << "KDOWN!\n";
+                // LOG_INFO("KDOWN!");
                 // ApplyCentralForce(characterBody, Vector3f_t{0,0,-100});
                 Translate(characterBody, Vector3f_t{0,0,-vel * deltatime});
             }
             if(Input.IsKeyDown(Key_t::KLEFT)) {
-                std::cout << "KLEFT!\n";
+                // LOG_INFO("KLEFT!");
                 // ApplyCentralForce(characterBody, Vector3f_t{100,0,0});
                 Translate(characterBody, Vector3f_t{vel * deltatime,0,0});
             }
             if(Input.IsKeyDown(Key_t::KRIGHT)) {
-                std::cout << "KRIGHT!\n";
+                // LOG_INFO("KRIGHT!");
                 // ApplyCentralForce(characterBody, Vector3f_t{-100,0,0});
                 Translate(characterBody, Vector3f_t{-vel * deltatime,0,0});
             }

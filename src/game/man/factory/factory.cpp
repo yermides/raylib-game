@@ -178,11 +178,11 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
     // }
     {
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
-        // body.type = BodyType_t::KINEMATIC;
-        // body.angularFactor = {0,0,0};
-        body.type = BodyType_t::DYNAMIC;
-        body.mass = 0.1f;
-        body.angularFactor = {1,0,0};
+        body.type = BodyType_t::KINEMATIC;
+        body.angularFactor = {0,0,0};
+        // body.type = BodyType_t::DYNAMIC;
+        // body.mass = 0.1f;
+        // body.angularFactor = {1,0,0};
     }
 
     return e;

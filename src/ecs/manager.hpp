@@ -1,5 +1,6 @@
 #pragma once
-#include <entt/entt.hpp>
+// #include <entt/entt.hpp>
+#include <entt/entity/registry.hpp>
 
 namespace ECS {
     using NullEntityType_t = entt::null_t;

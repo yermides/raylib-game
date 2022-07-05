@@ -1,5 +1,5 @@
 #include "input.hpp"
-#include <iostream>
+#include <string>
 
 SInput_t::SInput_t(const KeyBindings_t& bindings) {
     keyboard = bindings.equivalences;
@@ -90,19 +90,25 @@ void SInput_t::HideCursor(void) {
 }
 
 bool SInput_t::IsCursorHidden(void) {
-    return RL::IsCursorHidden();
+    bool value = RL::IsCursorHidden();
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", value);
+    return value;
 }
 
 void SInput_t::EnableCursor(void) {
+    LOG_INFO(__PRETTY_FUNCTION__);
     RL::EnableCursor();
 }
 
 void SInput_t::DisableCursor(void) {
+    LOG_INFO(__PRETTY_FUNCTION__);
     RL::DisableCursor();
 }
 
 bool SInput_t::IsCursorOnScreen(void) {
-    return RL::IsCursorOnScreen();
+    bool value = RL::IsCursorOnScreen();
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", value);
+    return value;
 }
 
 // Private

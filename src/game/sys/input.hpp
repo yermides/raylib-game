@@ -6,6 +6,7 @@
 #include "helpers/keybindings.hpp"
 #include "helpers/includes/raylib.hpp"
 #include "helpers/vector2.hpp"
+#include "helpers/logger.hpp"
 
 struct SInput_t {
     explicit SInput_t(const KeyBindings_t& bindings);
