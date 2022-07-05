@@ -1,7 +1,6 @@
 #pragma once
 #include <string_view>
 #include "ecs/manager.hpp"
-#include "helpers/vectors.hpp"
 #include "game/cmp/helpers/all.hpp"
 
 struct EntityFactory_t {

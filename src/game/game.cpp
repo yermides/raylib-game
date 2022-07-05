@@ -1,6 +1,4 @@
 #include "game.hpp"
-#include <iostream>
-#include <imgui/imgui.h>
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/includes/raylib.hpp"
 #include "helpers/vector3.hpp"
@@ -9,11 +7,7 @@
 Game_t::Game_t() {
     LOG_INIT();
 
-    // Vector3f_t v1 {1,1,1};
-    // Vector3f_t v2 {2,3,4};
-    // std::cout << "Hello from Game!\n";
     // std::cout << ImGui::GetVersion() << "\n";
-    // Vector3f_t::print(v1 = v2);
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddToWorld>(Physics);
@@ -34,12 +28,16 @@ void Game_t::loop() {
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
-    Input.DisableCursor();
+    // Input.DisableCursor();
 
     const CInput_t cameraControls = CreateFlyingCameraControls();
 
     Factory.createPhysicsPlane(CTransform_t{{0,0,0}});
-    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
+    Factory.createPhysicsPlane(CTransform_t{{10,0,10}, {0,180,0}});
+    // ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
+    // ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{0,25,-30},{-45,180,0}});
+    ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{-10,10,-10},{-20,45,0}});
+
     // these 4 are just 4 fun, to create edges around the platform
     // Factory.createPhysicsPlane(CTransform_t{{40,4,0}});
     // Factory.createPhysicsPlane(CTransform_t{{-40,4,0}});
@@ -57,41 +55,68 @@ void Game_t::loop() {
     ECS::Entityid_t character = Factory.createCharacter(CTransform_t{{0,4,0}});
     CRigidbody_t& characterBody = EntMan.getComponent<CRigidbody_t>(character);
 
+    auto& charTr = EntMan.getComponent<CTransform_t>(character).position;
+    auto& camTr = EntMan.getComponent<CTransform_t>(camera).position;
+    auto& camTrans = EntMan.getComponent<CTransform_t>(camera);
+    auto& charTrans = EntMan.getComponent<CTransform_t>(character);
+
+    const Vector3f_t distanceToCamera = camTr - charTr;
+
     while (Render.isAlive()) {
+        // Vector3f_t dest = charTr + distanceToCamera;
+        Vector3f_t dest = (charTr + (GetBackVector(camTrans) * 30.0f)) + Vector3f_t{0,10,0};
+        camTr = Vector3f_t::lerp(camTr, dest, 1.0f * deltatime);
+
         if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
-            // Input.IsCursorHidden() ? Input.EnableCursor() : Input.HideCursor();
             Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();
         }
 
-        if(Input.IsKeyPressed(Key_t::TAB)) {
-            if(EntMan.hasAllComponents<CInput_t>(camera)) {
-                EntMan.removeComponent<CInput_t>(camera);
-            } else {
-                EntMan.addComponent<CInput_t>(camera, cameraControls);
-            }
-        }
+        // if(Input.IsKeyPressed(Key_t::TAB)) {
+        //     if(EntMan.hasAllComponents<CInput_t>(camera)) {
+        //         EntMan.removeComponent<CInput_t>(camera);
+        //     } else {
+        //         EntMan.addComponent<CInput_t>(camera, cameraControls);
+        //     }
+        // }
+            
         {
             constexpr float vel = 10.0f;
 
+            if(Input.IsKeyDown(Key_t::A)) {
+                camTrans.rotation.add_y((vel * 3.0f * deltatime));
+            }
+            if(Input.IsKeyDown(Key_t::D)) {
+                camTrans.rotation.add_y(-(vel * 3.0f * deltatime));
+            }
+
+            if(Input.IsKeyPressed(Key_t::SPACE)) {
+                LOG_WARN("Camera forward (?) = {}", GetForwardVector(camTrans).toString());
+                LOG_WARN("Camera forward2(?) = {}", camTrans.rotation.forward().toString());
+                LOG_WARN("Camera right   (?) = {}", GetRightVector(camTrans).toString());
+                LOG_WARN("Camera right2  (?) = {}", camTrans.rotation.right().toString());
+                LOG_WARN("Camera up      (?) = {}", GetUpVector(camTrans).toString());
+                LOG_WARN("Camera up2     (?) = {}", camTrans.rotation.up().toString());
+                ApplyCentralImpulse(characterBody, Vector3f_t{0,100,0});
+            }
             if(Input.IsKeyDown(Key_t::KUP)) {
-                // LOG_INFO("KUP!");
-                // ApplyCentralForce(characterBody, Vector3f_t{0,0,100});
-                Translate(characterBody, Vector3f_t{0,0,vel * deltatime});
+                Vector3f_t forward = GetForwardVector(camTrans);
+                forward.set_y(0);
+                Translate(characterBody, forward * vel * deltatime);
             }
             if(Input.IsKeyDown(Key_t::KDOWN)) {
-                // LOG_INFO("KDOWN!");
-                // ApplyCentralForce(characterBody, Vector3f_t{0,0,-100});
-                Translate(characterBody, Vector3f_t{0,0,-vel * deltatime});
+                Vector3f_t back = GetBackVector(camTrans);
+                back.set_y(0);
+                Translate(characterBody, back * vel * deltatime);
             }
             if(Input.IsKeyDown(Key_t::KLEFT)) {
-                // LOG_INFO("KLEFT!");
-                // ApplyCentralForce(characterBody, Vector3f_t{100,0,0});
-                Translate(characterBody, Vector3f_t{vel * deltatime,0,0});
+                Vector3f_t left = GetLeftVector(camTrans);
+                left.set_y(0);
+                Translate(characterBody, left * vel * deltatime);
             }
             if(Input.IsKeyDown(Key_t::KRIGHT)) {
-                // LOG_INFO("KRIGHT!");
-                // ApplyCentralForce(characterBody, Vector3f_t{-100,0,0});
-                Translate(characterBody, Vector3f_t{-vel * deltatime,0,0});
+                Vector3f_t right = GetRightVector(camTrans);
+                right.set_y(0);
+                Translate(characterBody, right * vel * deltatime);
             }
         }
         

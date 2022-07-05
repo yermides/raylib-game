@@ -1,5 +1,4 @@
 #pragma once
-#include "helpers/vectors.hpp"
 #include "helpers/vector3.hpp"
 
 enum class Projection_t {

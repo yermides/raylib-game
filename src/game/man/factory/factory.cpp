@@ -1,6 +1,6 @@
 #include "factory.hpp"
 #include "game/sys/helpers/all.hpp"
-#include <iostream>
+#include "helpers/logger.hpp"
 
 EntityFactory_t::EntityFactory_t(ECS::EntityManager_t& pEntMan) : EntMan(pEntMan) {}
 
@@ -74,6 +74,7 @@ ECS::Entityid_t EntityFactory_t::createPlayer(const CTransform_t& ptransform) {
         }
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
@@ -88,6 +89,7 @@ ECS::Entityid_t EntityFactory_t::createCamera(const CTransform_t& ptransform) {
         camera.fovy = 90.0f;
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
@@ -105,6 +107,7 @@ ECS::Entityid_t EntityFactory_t::createFlyingCamera(const CTransform_t& ptransfo
         EntMan.addComponent<CInput_t>(e, CreateFlyingCameraControls());
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
@@ -120,6 +123,7 @@ ECS::Entityid_t EntityFactory_t::createStaticMesh(std::string_view filepath, con
         model.model = RL::LoadModel(filepath.data());
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
@@ -138,6 +142,7 @@ ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransfo
         body.type = BodyType_t::STATIC;
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
@@ -159,6 +164,7 @@ ECS::Entityid_t EntityFactory_t::createPhysicsBall(const CTransform_t& ptransfor
         body.type = BodyType_t::DYNAMIC;
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
@@ -170,7 +176,7 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
     {
         CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(e);
         collider.radius = 2.0f;
-        collider.height = 4.0f;
+        collider.height = 6.0f;
     }
     // {
     //     CModelRenderer_t& model = EntMan.addComponent<CModelRenderer_t>(e);
@@ -178,14 +184,19 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
     // }
     {
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
-        body.type = BodyType_t::KINEMATIC;
-        body.angularFactor = {0,0,0};
-        // body.type = BodyType_t::DYNAMIC;
-        // body.mass = 0.1f;
-        // body.angularFactor = {1,0,0};
+        {
+            // body.angularFactor = {0,0,0};
+            // body.type = BodyType_t::KINEMATIC;
+        }
+        {
+            body.type = BodyType_t::DYNAMIC;
+            body.mass = 10.0f;
+            body.angularFactor = {0,0,0};
+        }
     }
 
+    LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
 }
 
-        // CCharacterController_t& controller = EntMan.addComponent<CCharacterController_t>(e);
+    // CCharacterController_t& controller = EntMan.addComponent<CCharacterController_t>(e);

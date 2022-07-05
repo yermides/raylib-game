@@ -3,8 +3,9 @@
 #include <cstring>
 #include <imgui/imgui.h>
 #include "helpers/includes/raylib.hpp"
-#include "helpers/adapters/vector.hpp"
 #include "helpers/logger.hpp"
+
+#include "transform.hpp"
 
 // #include <glm/gtc/matrix_transform.hpp>
 // #define GLM_ENABLE_EXPERIMENTAL
@@ -18,8 +19,8 @@ SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
     #endif
 
     uint32_t configFlags = 0
-    // |   RL::FLAG_MSAA_4X_HINT
-    // |   RL::FLAG_VSYNC_HINT
+    |   RL::FLAG_MSAA_4X_HINT
+    |   RL::FLAG_VSYNC_HINT
     ;
 
     RL::SetConfigFlags(configFlags);
@@ -27,7 +28,7 @@ SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
 
     uint32_t stateFlags = 0
     // |   RL::FLAG_WINDOW_UNDECORATED
-    |   RL::FLAG_WINDOW_RESIZABLE
+    // |   RL::FLAG_WINDOW_RESIZABLE
     ;
 
     RL::SetWindowState(stateFlags);
@@ -131,7 +132,8 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
         CTransform_t& transform = EntMan.getComponent<CTransform_t>(mainCamera);
         camera.position = transform.position;
         // camera.target = cmp_cam->target; // TODO: put this in the camera system
-        camera.target = transform.position + transform.rotation.forward();
+        // camera.target = transform.position + transform.rotation.forward();
+        camera.target = transform.position + GetForwardVector(transform);
 
         camera.up = cmp_cam->up;
         camera.fovy = cmp_cam->fovy;

@@ -3,7 +3,6 @@
 #include <glm/gtx/string_cast.hpp>
 #include <bullet3/LinearMath/btVector3.h>
 #include "helpers/includes/raylib.hpp"
-#include <iostream>
 
 // Facade for glm::vec3
 struct Vector3f_t {
@@ -35,6 +34,14 @@ struct Vector3f_t {
         };
     }
 
+    Vector3f_t operator*(const float& other) {
+        return { 
+                v.x * other
+            ,   v.y * other
+            ,   v.z * other
+        };
+    }
+
     Vector3f_t& operator=(const Vector3f_t& other) {
         v.x = other.v.x;
         v.y = other.v.y;
@@ -50,6 +57,12 @@ struct Vector3f_t {
 
     Vector3f_t& operator-=(const Vector3f_t& other) {
         Vector3f_t result = (*this) - other;
+        *this = result;
+        return *this;
+    }
+
+    Vector3f_t& operator*=(const float& other) {
+        Vector3f_t result = (*this) * other;
         *this = result;
         return *this;
     }
@@ -77,73 +90,24 @@ struct Vector3f_t {
     constexpr void add_y(float value) { v.y += value; }
     constexpr void add_z(float value) { v.z += value; }
 
-    inline Vector3f_t normalized () {
-        glm::vec3 vector = glm::normalize(v);
-        return Vector3f_t { vector.x, vector.y, vector.z };
+    Vector3f_t forward() const;
+    Vector3f_t right() const;
+    Vector3f_t up() const;
+
+    Vector3f_t normalized() const;
+
+    static Vector3f_t lerp(const Vector3f_t& v1, const Vector3f_t& v2, float percentage); // between 0 and 1
+
+    inline friend std::ostream& operator<<(std::ostream& os, const Vector3f_t& vector) {
+        os << vector.toString();
+        return os;
     }
 
-
-    // TODO: get direction vector
-    inline Vector3f_t forward() {
-        glm::vec3 front {};
-        // yaw = y (left right), pitch = x (up down), roll = z (screw-like rotation)
-        float yaw = v.y, pitch = v.x /*, roll = v.z */;
-
-        front.x = -cos(glm::radians(pitch)) * sin(glm::radians(yaw));
-        front.y = sin(glm::radians(pitch));
-        front.z = -cos(glm::radians(pitch)) * cos(glm::radians(yaw));
-
-        front.x = glm::degrees(front.x);
-        front.y = glm::degrees(front.y);
-        front.z = glm::degrees(front.z);
-
-        front = glm::normalize(front);
-        return front;
-    }
-
-    // TODO:
-    inline Vector3f_t right() {
-        glm::vec3 result {};
-        // float yaw = v.y;
-        // {
-        //     result.x = glm::cos(yaw);
-        //     result.y = 0.0f;
-        //     result.z = -glm::sin(yaw);            
-        //     result = glm::normalize(result);
-        // }
-
-        {
-            glm::vec3 dir = forward();
-            result = glm::normalize(glm::cross(dir, glm::vec3{0,1,0}));
-        }
-
-        return result;
-    }
-
-    // TODO:
-    inline Vector3f_t up() {
-        glm::vec3 result {};
-
-        // { // first option, I expect it to not work
-        //     float yaw = v.y, pitch = v.x /*, roll = v.z */;
-
-        //     result.x = glm::sin(pitch) * glm::sin(yaw);
-        //     result.y = glm::cos(pitch);
-        //     result.z = glm::sin(pitch) * glm::cos(yaw);
-        // }
-        {
-            glm::vec3 r = right();
-            glm::vec3 f = forward();
-            result    = glm::normalize(glm::cross(r, f));
-        }
-
-        return result;
-    }
-
-    inline static void print(const Vector3f_t& vector) { 
-        std::cout << glm::to_string(vector.v) << "\n";
-    }
-
+    std::string toString() const;
 private:
     glm::vec3 v {};
 };
+
+// inline static void print(const Vector3f_t& vector) { 
+//     std::cout << glm::to_string(vector.v) << "\n";
+// }
