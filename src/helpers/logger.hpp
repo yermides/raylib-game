@@ -1,6 +1,6 @@
 #pragma once
 
-#define USE_GAME_LOGGING_SYSTEM 1
+// #define USE_GAME_LOGGING_SYSTEM 1
 
 #ifdef USE_GAME_LOGGING_SYSTEM
     // namespace spdlog { class logger; }

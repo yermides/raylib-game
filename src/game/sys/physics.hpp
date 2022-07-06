@@ -54,3 +54,16 @@ void ClearForces(CRigidbody_t& rigidbody);
         - That means both static and kinematics are unaffected by gravity
         - To move a kinematic object, use the translate function
 */
+
+/*
+    Important information regarding bullet's substepping:
+    If I specify a maxSubSteps value greater than zero, it expects the timestep to be constant (which it should)
+    Also, substepping is called whenever the deltatime exceds fixedDelta (the excess is accumulated internally)
+    So, for example, a 165hz refresh of the main thread calling for a 50hz physics will cause ~3 internal substeps
+    So maxSubSteps should be 4 to be in range for a fully capable interpolation
+
+    Also, it's not a bad idea to check if I should copy translation & rotation from physics during internalTickCallback
+    Although this doesn't seem to be an issue UNTIL I use an specific physics thread running at 50 ~ 60 fps
+    Basically 'cause right now they're being updated at 60fps so the movement transfer is identical 
+    And, casually, there is no interpolation required (thoght activated for mentioned reasons)
+*/

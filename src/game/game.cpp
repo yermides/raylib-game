@@ -24,7 +24,7 @@ Game_t::Game_t() {
 }
 
 void Game_t::loop() {
-    constexpr uint32_t kFPS = 120;
+    constexpr uint32_t kFPS = 6;
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
@@ -33,7 +33,6 @@ void Game_t::loop() {
     const CInput_t cameraControls = CreateFlyingCameraControls();
 
     Factory.createPhysicsPlane(CTransform_t{{0,0,0}});
-    Factory.createPhysicsPlane(CTransform_t{{10,0,10}, {0,180,0}});
     // ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
     // ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{0,25,-30},{-45,180,0}});
     ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{-10,10,-10},{-20,45,0}});
@@ -122,6 +121,27 @@ void Game_t::loop() {
         
         Input.update(EntMan,deltatime);
         Physics.update(EntMan, deltatime);
+        Render.update(EntMan);
+    }
+}
+
+#ifdef __MINGW32__
+    #include <mingw-std-threads/mingw.thread.h>
+    #include <mingw-std-threads/mingw.mutex.h>
+#else
+    #include <thread>
+    #include <mutex>
+#endif
+
+void Game_t::loop_multithread() {
+    constexpr float kFPS = 60.0f;
+    constexpr float kFixedDelta = 1.0f / kFPS;
+    Render.SetTargetFPS(kFPS);
+    ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
+
+    while (Render.isAlive()) {
+        Input.update(EntMan, kFixedDelta);
+        // Physics.update(EntMan, kFixedDelta);
         Render.update(EntMan);
     }
 }

@@ -1,4 +1,5 @@
 #include "input.hpp"
+#include "transform.hpp"
 #include <string>
 
 SInput_t::SInput_t(const KeyBindings_t& bindings) {
@@ -8,14 +9,14 @@ SInput_t::SInput_t(const KeyBindings_t& bindings) {
 
 // TODO: clean this mess, it works but please...
 void SInput_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
-    auto lambda = [this, &EntMan](auto e, CInput_t& input) {
+    auto lambda = [this, &EntMan, deltatime](auto e, CInput_t& input) {
         // Keyboard input actions
         for (auto& action : input.actions) {
             auto func = checks.at(action.requiredState);
             Key_t keycode = action.requiredKey;
 
             if(func(this, keycode) && action.callback) {
-                action.callback(EntMan, e);
+                action.callback(EntMan, e, deltatime);
             }
         }
 
@@ -125,6 +126,7 @@ int SInput_t::getMouseButtonValue(MouseButton_t button) const {
 
 CInput_t CreateFlyingCameraControls() {
     CInput_t input {};
+    constexpr float velocity = 50.0f;
 
     {
         MouseDeltaAction_t action {
@@ -144,9 +146,9 @@ CInput_t CreateFlyingCameraControls() {
         InputAction_t action { 
             Key_t::W
         ,   KeyState_t::DOWN
-        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
-                transform.position += transform.rotation.forward();
+        ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.position += GetForwardVector(transform) * (deltatime * velocity);
             } 
         };
 
@@ -156,9 +158,9 @@ CInput_t CreateFlyingCameraControls() {
         InputAction_t action { 
             Key_t::A
         ,   KeyState_t::DOWN
-        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
-                transform.position -= transform.rotation.right();
+        ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.position += GetLeftVector(transform) * (deltatime * velocity);
             } 
         };
 
@@ -168,9 +170,9 @@ CInput_t CreateFlyingCameraControls() {
         InputAction_t action { 
             Key_t::S
         ,   KeyState_t::DOWN
-        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
-                transform.position -= transform.rotation.forward();
+        ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.position += GetBackVector(transform) * (deltatime * velocity);
             } 
         };
 
@@ -180,9 +182,9 @@ CInput_t CreateFlyingCameraControls() {
         InputAction_t action { 
             Key_t::D
         ,   KeyState_t::DOWN
-        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
-                transform.position += transform.rotation.right();
+        ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.position += GetRightVector(transform) * (deltatime * velocity);
             } 
         };
 
@@ -192,9 +194,9 @@ CInput_t CreateFlyingCameraControls() {
         InputAction_t action { 
             Key_t::SPACE
         ,   KeyState_t::DOWN
-        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
-                transform.position += Vector3f_t{0,1,0};
+        ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.position += Vector3f_t{0,1,0} * (deltatime * velocity);
             } 
         };
 
@@ -204,9 +206,9 @@ CInput_t CreateFlyingCameraControls() {
         InputAction_t action { 
             Key_t::LEFT_CONTROL
         ,   KeyState_t::DOWN
-        ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-                auto [transform, camera] = EntMan.getComponents<CTransform_t, CCamera_t>(e);
-                transform.position -= Vector3f_t{0,1,0};
+        ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
+                transform.position -= Vector3f_t{0,1,0} * (deltatime * velocity);
             } 
         };
 

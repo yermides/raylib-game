@@ -21,7 +21,7 @@ ECS::Entityid_t EntityFactory_t::createPlayer(const CTransform_t& ptransform) {
             InputAction_t action { 
                 Key_t::W
             ,   KeyState_t::DOWN
-            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
                     CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
                     float zposition = transform.position.get_z() + .3f;
                     transform.position.set_z(zposition);
@@ -35,7 +35,7 @@ ECS::Entityid_t EntityFactory_t::createPlayer(const CTransform_t& ptransform) {
             InputAction_t action { 
                 Key_t::S
             ,   KeyState_t::DOWN
-            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
                     CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
                     float zposition = transform.position.get_z() - .3f;
                     transform.position.set_z(zposition);
@@ -49,7 +49,7 @@ ECS::Entityid_t EntityFactory_t::createPlayer(const CTransform_t& ptransform) {
             InputAction_t action { 
                 Key_t::A
             ,   KeyState_t::DOWN
-            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
                     CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
                     float xposition = transform.position.get_x() + .3f;
                     transform.position.set_x(xposition);
@@ -63,7 +63,7 @@ ECS::Entityid_t EntityFactory_t::createPlayer(const CTransform_t& ptransform) {
             InputAction_t action { 
                 Key_t::D
             ,   KeyState_t::DOWN
-            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
+            ,   [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
                     CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
                     float xposition = transform.position.get_x() - .3f;
                     transform.position.set_x(xposition);
@@ -135,7 +135,7 @@ ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransfo
 
     {
         CBoxCollider_t& collider = EntMan.addComponent<CBoxCollider_t>(e);
-        collider.boxHalfExtents = Vector3f_t{ 20.0f, 2.0f, 20.0f };
+        collider.boxHalfExtents = Vector3f_t{ 50.0f, 2.0f, 50.0f };
     }
     {
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);

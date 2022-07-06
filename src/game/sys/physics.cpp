@@ -25,6 +25,18 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
 
     debugDraw = std::make_unique<Bullet3PhysicsDrawer_t>();
     dynamicsWorld->setDebugDrawer(debugDraw.get());
+
+    // TODO: setup bullet collision response, there are two ways (and I don't know which one's better)
+    // 1st approach is to set an internal callback in the world that will check collisions manifolds
+    // 2nd approach is to do the same manually after StepSimulation
+    // I got a little doubt if the callback is called in the substepping process, if it does, 1st method might have too much calls
+
+    auto bulletInternalTickCallback = [](btDynamicsWorld* world, btScalar timeStep) {
+        // static int count = 0;
+        LOG_CORE_CRITICAL("Internal Physics Callback Timestep: {}", timeStep);
+    };
+
+    dynamicsWorld->setInternalTickCallback(bulletInternalTickCallback, this, true);
 }
 
 SPhysics_t::~SPhysics_t() {
@@ -75,7 +87,10 @@ void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
 
     addEntitiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
     addCharactersToWorld(EntMan);
-    dynamicsWorld->stepSimulation(deltatime, 10);
+
+    constexpr float kFixedTimestep = 1.0f / 60.0f;
+    
+    dynamicsWorld->stepSimulation(deltatime, 5, kFixedTimestep);
 
     EntMan.forAllMatching<CTransform_t, CRigidbody_t>(lambda);
 

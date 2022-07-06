@@ -6,7 +6,7 @@
 struct Game_t {
     explicit Game_t();
     void loop();
-
+    void loop_multithread(); // WARNING: this one is just a test, generally, clall loop() instead from main
 private:
     ECS::EntityManager_t EntMan {};
     SRender_t Render { 1920, 1080 }; // 2304, 1296
