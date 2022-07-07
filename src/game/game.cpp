@@ -13,6 +13,7 @@ Game_t::Game_t() {
     EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddToWorld>(Physics);
     EntMan.connectOnContruct<CCharacterController_t, &SPhysics_t::registerAddCharacterToWorld>(Physics);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
+    EntMan.connectOnRemove<CRigidbody_t, &SPhysics_t::removeAndDeleteBodyFromWorld>(Physics);
 
     // eCamera = Factory.createCamera(CTransform_t{{0,15,-10}, {0,0,0}});
     // ePlayer = Factory.createPlayer(CTransform_t{{0,0,10}});
@@ -24,7 +25,7 @@ Game_t::Game_t() {
 }
 
 void Game_t::loop() {
-    constexpr uint32_t kFPS = 6;
+    constexpr uint32_t kFPS = 60;
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
@@ -45,7 +46,7 @@ void Game_t::loop() {
 
     // change x
     const float separation = 4.5f;
-    Factory.createPhysicsBall(CTransform_t{{separation,26,0}});
+    ECS::Entityid_t ball1 = Factory.createPhysicsBall(CTransform_t{{separation,26,0}});
     Factory.createPhysicsBall(CTransform_t{{-separation,28,0}});
     // change z
     Factory.createPhysicsBall(CTransform_t{{0,30,separation}});
@@ -68,6 +69,10 @@ void Game_t::loop() {
 
         if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
             Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();
+        }
+
+        if(Input.IsMouseButtonPressed(MouseButton_t::LEFT) && EntMan.hasComponent<CRigidbody_t>(ball1)) {
+            EntMan.removeComponent<CRigidbody_t>(ball1);
         }
 
         // if(Input.IsKeyPressed(Key_t::TAB)) {

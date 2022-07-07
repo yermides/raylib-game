@@ -1,5 +1,6 @@
 #include "physics.hpp"
 #include <bullet3/btBulletCollisionCommon.h>
+#include <bullet3/BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <bullet3/btBulletDynamicsCommon.h>
 #include "helpers/vector3.hpp"
 #include "game/cmp/helpers/all.hpp"
@@ -21,6 +22,8 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     ,   collisionConfiguration.get()
     );
 
+    dynamicsWorld->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
+
     dynamicsWorld->setGravity(gravity);
 
     debugDraw = std::make_unique<Bullet3PhysicsDrawer_t>();
@@ -30,16 +33,13 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     // 1st approach is to set an internal callback in the world that will check collisions manifolds
     // 2nd approach is to do the same manually after StepSimulation
     // I got a little doubt if the callback is called in the substepping process, if it does, 1st method might have too much calls
-
-    auto bulletInternalTickCallback = [](btDynamicsWorld* world, btScalar timeStep) {
-        // static int count = 0;
-        LOG_CORE_CRITICAL("Internal Physics Callback Timestep: {}", timeStep);
-    };
+    // spoiler: it does get called, 1st method is the way to go
 
     dynamicsWorld->setInternalTickCallback(bulletInternalTickCallback, this, true);
 }
 
 SPhysics_t::~SPhysics_t() {
+    // TODO: maybe needs to be improved, but it's enough for now
     btAlignedObjectArray<btCollisionShape*> collisionShapes;
 
     for (int i = dynamicsWorld->getNumCollisionObjects() - 1; i >= 0; i--) {
@@ -55,6 +55,16 @@ SPhysics_t::~SPhysics_t() {
 		}
 
 		dynamicsWorld->removeCollisionObject(obj);
+
+        // FIXME: i'm assuming a rigidbody here, but it could be a collisionObject or ghostObject
+        // right now if I add those it could crash (or no because of the null check from below)
+        RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(obj->getUserPointer());
+
+        if(userPointer) {
+            delete userPointer;
+            LOG_CORE_INFO("User pointer freed from rigidbody");
+        }
+
 		delete obj;
 	}
 
@@ -67,14 +77,14 @@ SPhysics_t::~SPhysics_t() {
 }
 
 void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
-    // Update transform with rigidbody's transform
-    auto lambda = [this](auto e, CTransform_t& transform, CRigidbody_t& rigidbody) {
+    auto lambda = [](auto e, CTransform_t& transform, CRigidbody_t& rigidbody) {
+        // Update transform with rigidbody's transform
         btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
 
-        // copy translation
+        // copy translation, TODO: use offset
         transform.position = bullet3body.getWorldTransform().getOrigin();
-        // TODO: use offset, and also copy rotation
 
+        // copy rotation
         float x {}, y {}, z {};
         btQuaternion orientation = bullet3body.getWorldTransform().getRotation();
         orientation.getEulerZYX(z, y, x);
@@ -85,17 +95,18 @@ void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
         transform.rotation.set(x, y, z);
     };
 
+    constexpr float kFixedTimestep = 1.0f / 60.0f;
+
     addEntitiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
     addCharactersToWorld(EntMan);
-
-    constexpr float kFixedTimestep = 1.0f / 60.0f;
-    
     dynamicsWorld->stepSimulation(deltatime, 5, kFixedTimestep);
-
     EntMan.forAllMatching<CTransform_t, CRigidbody_t>(lambda);
-
     dynamicsWorld->debugDrawWorld();
     uploadDebugDrawContext(EntMan);
+}
+
+void SPhysics_t::ping() {
+    LOG_INFO("Yes, I am alive {}", (void*)this);
 }
 
 void SPhysics_t::registerAddToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
@@ -104,6 +115,38 @@ void SPhysics_t::registerAddToWorld(ECS::ComponentRegistry_t& registry, ECS::Ent
 
 void SPhysics_t::registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
     charactersToAddWorld.emplace_back(e);
+}
+
+void SPhysics_t::removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    const ECS::EntityManager_t& EntMan = registry.ctx().at<ECS::EntityManager_t>();
+    const CRigidbody_t& rigidbody = EntMan.getComponent<CRigidbody_t>(e);
+
+    if(rigidbody.attachedCollider) {
+        btCollisionShape* shape = static_cast<btCollisionShape*>(rigidbody.attachedCollider->runtimeBullet3CollisionShape);
+        if(shape) delete shape;
+    }
+    
+    btRigidBody* bullet3body = static_cast<btRigidBody*>(rigidbody.runtimeBullet3Body);
+
+    if(bullet3body) {
+        if (bullet3body->getMotionState()) {
+            delete bullet3body->getMotionState();
+        }
+
+        dynamicsWorld->removeRigidBody(bullet3body);
+
+        RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(bullet3body->getUserPointer());
+
+        if(userPointer) {
+            delete userPointer;
+            LOG_CORE_INFO("User pointer freed from rigidbody");
+        }
+
+        delete bullet3body;
+    }
+
+    LOG_CORE_WARN("I got here, technically rigidbody runtime destruction is complete");
+    // yeah it works well
 }
 
 // private functions
@@ -185,9 +228,16 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
 
         col->runtimeBullet3CollisionShape = collisionShape;
         rigidbody.runtimeBullet3Body = body;
+        rigidbody.attachedCollider = col;
 
         //add the body to the dynamics world
         dynamicsWorld->addRigidBody(body);
+
+        RigidbodyUserPointer_t* userPointer = new RigidbodyUserPointer_t {
+            &EntMan, &rigidbody
+        };
+
+        body->setUserPointer(userPointer);
 
         LOG_CORE_INFO("Rigidbody successfully created and added to world");
     }
@@ -212,6 +262,45 @@ void SPhysics_t::uploadDebugDrawContext(ECS::EntityManager_t& EntMan) {
     Bullet3PhysicsDrawer_t* bulletDrawer = (Bullet3PhysicsDrawer_t*)(debugDraw.get());
     SCPhysicsDrawingContext_t& context = EntMan.getSingletonComponent<SCPhysicsDrawingContext_t>();
     context.lines = &bulletDrawer->getLinesVector();
+}
+
+void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeStep) {
+    SPhysics_t* Physics = static_cast<SPhysics_t*>(world->getWorldUserInfo());
+
+    if(!Physics) return;
+    // gContactAddedCallback
+    // gContactEndedCallback
+
+    // btBroadphaseProxy::SensorTrigger
+    
+    // static int count = 0;
+    // LOG_CORE_CRITICAL("Internal Physics Callback Timestep: {}", timeStep);
+    int numManifolds = world->getDispatcher()->getNumManifolds();
+    // LOG_CORE_WARN("Manifold count: {}", numManifolds);
+
+    for (int i {}; i < numManifolds; ++i) {
+        btPersistentManifold* contactManifold =  world->getDispatcher()->getManifoldByIndexInternal(i);
+        const btCollisionObject* obA = static_cast<const btCollisionObject*>(contactManifold->getBody0());
+        const btCollisionObject* obB = static_cast<const btCollisionObject*>(contactManifold->getBody1());
+
+        // maybe get user pointers
+        
+        // TODO: here I should save to a SPhysics_t member container a collection of all collisions 
+        // (maybe a set to avoid duplicates, I dunno)
+        // collisions being a struct holding the id's of entities collided and hitInfo data
+        // like the contact points and their normals, etc
+        int numContacts = contactManifold->getNumContacts();
+
+        for (int j {}; j < numContacts; ++j) {
+            btManifoldPoint& pt = contactManifold->getContactPoint(j);
+            
+            if (pt.getDistance() < 0.0f) {
+                const btVector3& ptA = pt.getPositionWorldOnA();
+                const btVector3& ptB = pt.getPositionWorldOnB();
+                const btVector3& normalOnB = pt.m_normalWorldOnB;
+            }
+        }
+    }
 }
 
 // Private Anonymous Functions
