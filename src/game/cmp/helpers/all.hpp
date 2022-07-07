@@ -10,3 +10,4 @@
 #include "../sprite.hpp"
 #include "../physics_draw_ctx.hpp"
 #include "../character.hpp"
+#include "../trigger.hpp"

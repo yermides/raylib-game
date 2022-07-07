@@ -1,6 +1,6 @@
 #pragma once
-// #include <entt/entt.hpp>
-#include <entt/entity/registry.hpp>
+#include <entt/entt.hpp>
+// #include <entt/entity/registry.hpp>
 
 namespace ECS {
     using NullEntityType_t = entt::null_t;
@@ -94,6 +94,11 @@ namespace ECS {
 
         template <typename Component_t>
         constexpr Entityid_t getEntity(Component_t& component) {
+            return entt::to_entity(m_componentsRegistry, component);
+        }
+
+        template <typename Component_t>
+        constexpr const Entityid_t getEntity(Component_t& component) const {
             return entt::to_entity(m_componentsRegistry, component);
         }
 

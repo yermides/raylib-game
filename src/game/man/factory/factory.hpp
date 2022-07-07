@@ -16,6 +16,9 @@ struct EntityFactory_t {
 
     // test for character controller
     ECS::Entityid_t createCharacter(const CTransform_t& ptransform = {});
+
+    // test for ghost objects
+    ECS::Entityid_t createTrigger(const CTransform_t& ptransform = {});
 private:
     ECS::EntityManager_t& EntMan;
 };

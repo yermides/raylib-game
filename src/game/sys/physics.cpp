@@ -36,6 +36,8 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     // spoiler: it does get called, 1st method is the way to go
 
     dynamicsWorld->setInternalTickCallback(bulletInternalTickCallback, this, true);
+
+    
 }
 
 SPhysics_t::~SPhysics_t() {
@@ -77,6 +79,21 @@ SPhysics_t::~SPhysics_t() {
 }
 
 void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
+    static bool ghostTestPassed = false;
+
+    if(!ghostTestPassed) {
+        
+
+        ghostTestPassed = true;
+    }
+
+    //
+    //
+    //
+    //
+    //
+    //
+
     auto lambda = [](auto e, CTransform_t& transform, CRigidbody_t& rigidbody) {
         // Update transform with rigidbody's transform
         btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
@@ -97,7 +114,7 @@ void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
 
     constexpr float kFixedTimestep = 1.0f / 60.0f;
 
-    addEntitiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
+    addRigidbodiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
     addCharactersToWorld(EntMan);
     dynamicsWorld->stepSimulation(deltatime, 5, kFixedTimestep);
     EntMan.forAllMatching<CTransform_t, CRigidbody_t>(lambda);
@@ -109,8 +126,16 @@ void SPhysics_t::ping() {
     LOG_INFO("Yes, I am alive {}", (void*)this);
 }
 
-void SPhysics_t::registerAddToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
-    entitiesToAddWorld.emplace_back(e);
+void SPhysics_t::registerAddColliderToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    collidersToAddWorld.emplace_back(e);
+}
+
+void SPhysics_t::registerAddRigidbodyToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    rigidbodiesToAddWorld.emplace_back(e);
+}
+
+void SPhysics_t::registerAddTriggerToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    triggersToAddWorld.emplace_back(e);
 }
 
 void SPhysics_t::registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
@@ -150,9 +175,41 @@ void SPhysics_t::removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry
 }
 
 // private functions
+void SPhysics_t::addCollidersToWorld(ECS::EntityManager_t& EntMan) {
+    for(const ECS::Entityid_t& e : collidersToAddWorld) {
+        if(!EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e)) continue;
 
-void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
-    for(const ECS::Entityid_t& e : entitiesToAddWorld) {
+        CCollider_t*      colliderComponent {};
+        btCollisionShape* collisionShape    {};
+
+        if(EntMan.hasComponent<CBoxCollider_t>(e)) {
+            CBoxCollider_t& collider = EntMan.getComponent<CBoxCollider_t>(e);
+            collisionShape = new btBoxShape(collider.boxHalfExtents);
+            colliderComponent = &collider;
+        } else if (EntMan.hasComponent<CSphereCollider_t>(e)) {
+            CSphereCollider_t& collider = EntMan.getComponent<CSphereCollider_t>(e);
+            collisionShape = new btSphereShape(collider.radius);
+            colliderComponent = &collider;
+        } else if (EntMan.hasComponent<CCapsuleCollider_t>(e)) {
+            CCapsuleCollider_t& collider = EntMan.getComponent<CCapsuleCollider_t>(e);
+            collisionShape = new btCapsuleShape(collider.radius, collider.height);
+            colliderComponent = &collider;
+        }
+
+        colliderComponent->runtimeBullet3CollisionShape = collisionShape;
+
+        // I'm still doubting these last lines, rigidbody may check ifthere's a collider, but anyway
+        if(EntMan.hasComponent<CRigidbody_t>(e)) {
+            CRigidbody_t& rigidbody = EntMan.getComponent<CRigidbody_t>(e);
+            rigidbody.attachedCollider = colliderComponent;
+        }
+    }
+
+    collidersToAddWorld.clear();
+}
+
+void SPhysics_t::addRigidbodiesToWorld(ECS::EntityManager_t& EntMan) {
+    for(const ECS::Entityid_t& e : rigidbodiesToAddWorld) {
         if(!EntMan.hasComponent<CRigidbody_t>(e) 
         || !EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e)) {
             continue; // TODO: improve if so it doesn't completely ignore if it doesn't have shape
@@ -165,7 +222,7 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
         auto [transform, rigidbody] = EntMan.getComponents<CTransform_t, CRigidbody_t>(e);
         btCollisionShape* collisionShape {};
 
-        // TODO: could be improved with template partial specialization
+        // TODO: could be improved with template partial specialization or another trigger (in process)
         if(EntMan.hasComponent<CBoxCollider_t>(e)) {
             CBoxCollider_t& collider = EntMan.getComponent<CBoxCollider_t>(e);
             col = &collider;
@@ -182,10 +239,19 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
             collisionShape = new btCapsuleShape(collider.radius, collider.height);
             LOG_CORE_INFO("CollisionShape created as CCapsuleCollider_t");
         }
+
+        // Set rigidbody's translation and rotation upon construction in the same place as the entity
+        //  TODO: maybe use offset
         
         btTransform bulletTransform;
-        bulletTransform.setIdentity(); // TODO: mimic rotation of transform.rotation
+        bulletTransform.setIdentity(); // DONE: mimic rotation of transform.rotation
         bulletTransform.setOrigin(transform.position);
+
+        const Vector3f_t& rot = transform.rotation;
+
+        btQuaternion quat;
+		quat.setEuler(rot.get_y(), rot.get_x(), rot.get_z());
+		bulletTransform.setRotation(quat);
 
         // for bullet, bodies are automatically dynamic if they have mass, so enforce mass if type dynamic
         if(rigidbody.type == BodyType_t::DYNAMIC) {
@@ -231,7 +297,7 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
         rigidbody.attachedCollider = col;
 
         //add the body to the dynamics world
-        dynamicsWorld->addRigidBody(body);
+        dynamicsWorld->addRigidBody(body /*, mask, group*/);
 
         RigidbodyUserPointer_t* userPointer = new RigidbodyUserPointer_t {
             &EntMan, &rigidbody
@@ -242,7 +308,44 @@ void SPhysics_t::addEntitiesToWorld(ECS::EntityManager_t& EntMan) {
         LOG_CORE_INFO("Rigidbody successfully created and added to world");
     }
 
-    entitiesToAddWorld.clear();
+    rigidbodiesToAddWorld.clear();
+}
+
+void SPhysics_t::addTriggersToWorld(ECS::EntityManager_t& EntMan) {
+    // FIXME: not use until it's functional, there's a rework of collision shapes addition in progress 
+    for(const ECS::Entityid_t& e : triggersToAddWorld) {
+        if(!EntMan.hasComponent<CTriggerVolume_t>(e) 
+        || !EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e)) {
+            continue;
+        }
+
+
+    }
+
+    triggersToAddWorld.clear();
+
+    // just keeping what should be inside the loop in here
+    // FIXME: erase this once I finish testing
+
+    btBoxShape* boxShape = new btBoxShape(btVector3(5,5,5));
+    btPairCachingGhostObject* ghostObject = new btPairCachingGhostObject();
+
+    // TODO: learn the difference between regular and pair caching ghost object
+    // btGhostObject* ghostObject = new btGhostObject();
+
+    btTransform planeTransform;
+    planeTransform.setIdentity();
+    planeTransform.setOrigin(btVector3(0, 10, 0));
+
+    ghostObject->setCollisionShape(boxShape);
+    ghostObject->setWorldTransform(planeTransform);
+    dynamicsWorld->addCollisionObject(ghostObject);
+
+    // makes it so it's not solid but receives collision events (just like a sensor/trigger yay!)
+    ghostObject->setCollisionFlags(ghostObject->getCollisionFlags() | btCollisionObject::CF_NO_CONTACT_RESPONSE);
+
+    // TODO: also, collisions have to be tested each frame, so I should cache all triggers and check for all of them
+    // their collisions inside the InternalTickCallback
 }
 
 void SPhysics_t::addCharactersToWorld(ECS::EntityManager_t& EntMan) {
@@ -278,29 +381,56 @@ void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeSt
     int numManifolds = world->getDispatcher()->getNumManifolds();
     // LOG_CORE_WARN("Manifold count: {}", numManifolds);
 
+
+    // LOG_CORE_WARN("=============================================");
     for (int i {}; i < numManifolds; ++i) {
         btPersistentManifold* contactManifold =  world->getDispatcher()->getManifoldByIndexInternal(i);
         const btCollisionObject* obA = static_cast<const btCollisionObject*>(contactManifold->getBody0());
         const btCollisionObject* obB = static_cast<const btCollisionObject*>(contactManifold->getBody1());
 
-        // maybe get user pointers
-        
+        RigidbodyUserPointer_t* userPointerA = static_cast<RigidbodyUserPointer_t*>(obA->getUserPointer());
+        RigidbodyUserPointer_t* userPointerB = static_cast<RigidbodyUserPointer_t*>(obB->getUserPointer());
+
+        if(!userPointerA || !userPointerB) return;
+
+        ECS::EntityManager_t& EntMan = *(userPointerA->entityManager);
+
+        CRigidbody_t& rbA = *(userPointerA->rigidbodyComponent);
+        CRigidbody_t& rbB = *(userPointerB->rigidbodyComponent);
+        ECS::Entityid_t entityA = EntMan.getEntity(rbA);
+        ECS::Entityid_t entityB = EntMan.getEntity(rbB);
+
+        uint32_t idA { static_cast<ENTT_ID_TYPE>(entityA) }, idB { static_cast<ENTT_ID_TYPE>(entityB) };
+        LOG_CORE_INFO("Detected collision between entities {} and {}", idA, idB);
+
+        // LOG_CORE_INFO("Detected collision between entities {} and {}", static_cast<ENTT_ID_TYPE>(entityA), static_cast<ENTT_ID_TYPE>(entityB));
+
         // TODO: here I should save to a SPhysics_t member container a collection of all collisions 
         // (maybe a set to avoid duplicates, I dunno)
         // collisions being a struct holding the id's of entities collided and hitInfo data
         // like the contact points and their normals, etc
+
+        // Up to this point is (at least) the broadphase acceptance of a collision, we don't know if it is a physical one
         int numContacts = contactManifold->getNumContacts();
 
         for (int j {}; j < numContacts; ++j) {
             btManifoldPoint& pt = contactManifold->getContactPoint(j);
             
+            // if any point exceeds the other's structure, there is a physical collision, not just AABB's
             if (pt.getDistance() < 0.0f) {
-                const btVector3& ptA = pt.getPositionWorldOnA();
-                const btVector3& ptB = pt.getPositionWorldOnB();
-                const btVector3& normalOnB = pt.m_normalWorldOnB;
+                LOG_CORE_INFO("Detected Internal collision between entities {} and {}", idA, idB);
+                break;
+
+                
+                // TODO: store contact information
+                // const btVector3& ptA = pt.getPositionWorldOnA();
+                // const btVector3& ptB = pt.getPositionWorldOnB();
+                // const btVector3& normalOnB = pt.m_normalWorldOnB;
             }
         }
     }
+
+    // LOG_CORE_WARN("=============================================");
 }
 
 // Private Anonymous Functions

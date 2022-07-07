@@ -159,7 +159,7 @@ ECS::Entityid_t EntityFactory_t::createPhysicsBall(const CTransform_t& ptransfor
     //     CModelRenderer_t& model = EntMan.addComponent<CModelRenderer_t>(e);
     //     model.model = RL::LoadModel("assets/untitled.obj");
     // }
-    {
+    {   
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
         body.type = BodyType_t::DYNAMIC;
     }
@@ -200,3 +200,12 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
 }
 
     // CCharacterController_t& controller = EntMan.addComponent<CCharacterController_t>(e);
+
+ECS::Entityid_t EntityFactory_t::createTrigger(const CTransform_t& ptransform) {
+    ECS::Entityid_t e = EntMan.createEntity();
+
+    EntMan.addComponent<CTransform_t>(e, ptransform);
+    EntMan.addComponent<CTriggerVolume_t>(e);
+
+    return e;
+}

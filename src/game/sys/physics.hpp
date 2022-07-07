@@ -15,6 +15,7 @@ class btIDebugDraw;
 struct RigidbodyUserPointer_t {
     ECS::EntityManager_t* entityManager {};
     CRigidbody_t* rigidbodyComponent    {};
+    uint32_t identifier                 {};
 };
 
 // bullet3 physics system facade, units are meters, just like raylib
@@ -26,12 +27,18 @@ struct SPhysics_t {
 
     void ping(); // debug purposes
 
-    // ECS Events
-    void registerAddToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
+    // Vector3f_t raycast() // just to not forget
+
+    // ECS Events, TODO: use some kind of command pool or something, it would clean the code
+    void registerAddColliderToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e); // collision shapes really
+    void registerAddRigidbodyToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
+    void registerAddTriggerToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
     void registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
     void removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
 private:
-    void addEntitiesToWorld(ECS::EntityManager_t& EntMan);
+    void addCollidersToWorld(ECS::EntityManager_t& EntMan);
+    void addRigidbodiesToWorld(ECS::EntityManager_t& EntMan);
+    void addTriggersToWorld(ECS::EntityManager_t& EntMan);
     void addCharactersToWorld(ECS::EntityManager_t& EntMan);
     void uploadDebugDrawContext(ECS::EntityManager_t& EntMan);
 
@@ -44,7 +51,15 @@ private:
     std::unique_ptr<btDynamicsWorld> dynamicsWorld;
     std::unique_ptr<btIDebugDraw> debugDraw;
 
-    std::vector<ECS::Entityid_t> entitiesToAddWorld {}, charactersToAddWorld {}; // characters are not used this way for now
+    std::vector<ECS::Entityid_t> 
+            collidersToAddWorld     {}
+        ,   rigidbodiesToAddWorld   {}
+        ,   charactersToAddWorld    {} // characters are not used this way for now
+        ,   triggersToAddWorld      {} 
+    ;
+
+    // I should store the trigger entities because their pairs are not checked by the world but by themselves
+    // std::vector<CTriggerVolume_t> triggers {} or something
 };
 
 void ApplyForce(CRigidbody_t& rigidbody, const Vector3f_t& force, const Vector3f_t& relativePosition);
@@ -63,6 +78,8 @@ void ClearForces(CRigidbody_t& rigidbody);
         - An object is automatically dynamic if it has mass (that's how bullet does it)
         - That means both static and kinematics are unaffected by gravity
         - To move a kinematic object, use the translate function
+        - Contacts only occur if a dynamic object touches other object (no matter the other's type)
+        - If I want to set custom contact addition, I need to use my own Broadphase Filter Callback (bullet docs p17)
 */
 
 /*

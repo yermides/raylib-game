@@ -10,8 +10,16 @@ Game_t::Game_t() {
     // std::cout << ImGui::GetVersion() << "\n";
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
-    EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddToWorld>(Physics);
-    EntMan.connectOnContruct<CCharacterController_t, &SPhysics_t::registerAddCharacterToWorld>(Physics);
+    
+    // EntMan.connectOnContruct<CBoxCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
+    // EntMan.connectOnContruct<CSphereCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
+    // EntMan.connectOnContruct<CCapsuleCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
+
+    EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddRigidbodyToWorld>(Physics);
+
+    // EntMan.connectOnContruct<CTriggerVolume_t, &SPhysics_t::registerAddTriggerToWorld>(Physics);
+
+    // EntMan.connectOnContruct<CCharacterController_t, &SPhysics_t::registerAddCharacterToWorld>(Physics);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
     EntMan.connectOnRemove<CRigidbody_t, &SPhysics_t::removeAndDeleteBodyFromWorld>(Physics);
 
@@ -29,30 +37,22 @@ void Game_t::loop() {
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
-    // Input.DisableCursor();
 
     const CInput_t cameraControls = CreateFlyingCameraControls();
+    ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{-10,10,-10},{-20,45,0}});
 
     Factory.createPhysicsPlane(CTransform_t{{0,0,0}});
     // ECS::Entityid_t camera = Factory.createFlyingCamera(CTransform_t{{0,25,-30}});
     // ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{0,25,-30},{-45,180,0}});
-    ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{-10,10,-10},{-20,45,0}});
-
-    // these 4 are just 4 fun, to create edges around the platform
-    // Factory.createPhysicsPlane(CTransform_t{{40,4,0}});
-    // Factory.createPhysicsPlane(CTransform_t{{-40,4,0}});
-    // Factory.createPhysicsPlane(CTransform_t{{0,4,40}});
-    // Factory.createPhysicsPlane(CTransform_t{{0,4,-40}});
 
     // change x
     const float separation = 4.5f;
-    ECS::Entityid_t ball1 = Factory.createPhysicsBall(CTransform_t{{separation,26,0}});
-    Factory.createPhysicsBall(CTransform_t{{-separation,28,0}});
-    // change z
-    Factory.createPhysicsBall(CTransform_t{{0,30,separation}});
-    Factory.createPhysicsBall(CTransform_t{{0,32,-separation}});
+    Factory.createPhysicsBall(CTransform_t{{separation,26,0}});
+    // Factory.createPhysicsBall(CTransform_t{{-separation,28,0}});
+    // Factory.createPhysicsBall(CTransform_t{{0,30,separation}});
+    // Factory.createPhysicsBall(CTransform_t{{0,32,-separation}});
 
-    ECS::Entityid_t character = Factory.createCharacter(CTransform_t{{0,4,0}});
+    ECS::Entityid_t character = Factory.createCharacter(CTransform_t{{0,8,0}});
     CRigidbody_t& characterBody = EntMan.getComponent<CRigidbody_t>(character);
 
     auto& charTr = EntMan.getComponent<CTransform_t>(character).position;
@@ -67,13 +67,9 @@ void Game_t::loop() {
         Vector3f_t dest = (charTr + (GetBackVector(camTrans) * 30.0f)) + Vector3f_t{0,10,0};
         camTr = Vector3f_t::lerp(camTr, dest, 1.0f * deltatime);
 
-        if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
-            Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();
-        }
-
-        if(Input.IsMouseButtonPressed(MouseButton_t::LEFT) && EntMan.hasComponent<CRigidbody_t>(ball1)) {
-            EntMan.removeComponent<CRigidbody_t>(ball1);
-        }
+        // if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
+        //     Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();
+        // }
 
         // if(Input.IsKeyPressed(Key_t::TAB)) {
         //     if(EntMan.hasAllComponents<CInput_t>(camera)) {
@@ -94,12 +90,12 @@ void Game_t::loop() {
             }
 
             if(Input.IsKeyPressed(Key_t::SPACE)) {
-                LOG_WARN("Camera forward (?) = {}", GetForwardVector(camTrans).toString());
-                LOG_WARN("Camera forward2(?) = {}", camTrans.rotation.forward().toString());
-                LOG_WARN("Camera right   (?) = {}", GetRightVector(camTrans).toString());
-                LOG_WARN("Camera right2  (?) = {}", camTrans.rotation.right().toString());
-                LOG_WARN("Camera up      (?) = {}", GetUpVector(camTrans).toString());
-                LOG_WARN("Camera up2     (?) = {}", camTrans.rotation.up().toString());
+                // LOG_WARN("Camera forward (?) = {}", GetForwardVector(camTrans).toString());
+                // LOG_WARN("Camera forward2(?) = {}", camTrans.rotation.forward().toString());
+                // LOG_WARN("Camera right   (?) = {}", GetRightVector(camTrans).toString());
+                // LOG_WARN("Camera right2  (?) = {}", camTrans.rotation.right().toString());
+                // LOG_WARN("Camera up      (?) = {}", GetUpVector(camTrans).toString());
+                // LOG_WARN("Camera up2     (?) = {}", camTrans.rotation.up().toString());
                 ApplyCentralImpulse(characterBody, Vector3f_t{0,100,0});
             }
             if(Input.IsKeyDown(Key_t::KUP)) {
