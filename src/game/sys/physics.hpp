@@ -3,6 +3,7 @@
 #include <vector>
 #include "ecs/manager.hpp"
 #include "helpers/physics_commands.hpp"
+// #include "helpers/types.hpp"
 
 struct Vector3f_t;
 struct CRigidbody_t;
@@ -32,12 +33,7 @@ struct SPhysics_t {
     void registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
     void removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
 private:
-    void addCollidersToWorld(ECS::EntityManager_t& EntMan);
-    void addRigidbodiesToWorld(ECS::EntityManager_t& EntMan);
-    void addTriggersToWorld(ECS::EntityManager_t& EntMan);
-    void addCharactersToWorld(ECS::EntityManager_t& EntMan);
     void uploadDebugDrawContext(ECS::EntityManager_t& EntMan);
-
     static void bulletInternalTickCallback(btDynamicsWorld* world, float timeStep);
 
     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration;
@@ -47,18 +43,12 @@ private:
     std::unique_ptr<btDynamicsWorld> dynamicsWorld;
     std::unique_ptr<btIDebugDraw> debugDraw;
 
-    std::vector<ECS::Entityid_t> 
-            collidersToAddWorld     {}
-        ,   rigidbodiesToAddWorld   {}
-        ,   charactersToAddWorld    {} // characters are not used this way for now
-        ,   triggersToAddWorld      {} 
-    ;
-
     // I should store the trigger entities because their pairs are not checked by the world but by themselves
     // std::vector<CTriggerVolume_t> triggers {} or something
 
     PhysicsContext_t m_PhysicsContext {};
     PhysicsCommandProcessor_t commandProcessor { m_PhysicsContext };
+    std::vector<ECS::Entityid_t> m_CachedTriggerObjects {};
 };
 
 void ApplyForce(CRigidbody_t& rigidbody, const Vector3f_t& force, const Vector3f_t& relativePosition);

@@ -17,7 +17,7 @@ Game_t::Game_t() {
 
     EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddRigidbodyToWorld>(Physics);
 
-    // EntMan.connectOnContruct<CTriggerVolume_t, &SPhysics_t::registerAddTriggerToWorld>(Physics);
+    EntMan.connectOnContruct<CTriggerVolume_t, &SPhysics_t::registerAddTriggerToWorld>(Physics);
 
     // EntMan.connectOnContruct<CCharacterController_t, &SPhysics_t::registerAddCharacterToWorld>(Physics);
     EntMan.connectOnRemove<CModelRenderer_t, &SRender_t::unloadModel>(Render);
@@ -60,12 +60,20 @@ void Game_t::loop() {
     auto& camTrans = EntMan.getComponent<CTransform_t>(camera);
     auto& charTrans = EntMan.getComponent<CTransform_t>(character);
 
+    // ECS::Entityid_t trigger = Factory.createTrigger(CTransform_t{{0,-10,0}});
+
     const Vector3f_t distanceToCamera = camTr - charTr;
 
     while (Render.isAlive()) {
         // Vector3f_t dest = charTr + distanceToCamera;
         Vector3f_t dest = (charTr + (GetBackVector(camTrans) * 30.0f)) + Vector3f_t{0,10,0};
         camTr = Vector3f_t::lerp(camTr, dest, 1.0f * deltatime);
+
+        if(Input.IsMouseButtonDown(MouseButton_t::RIGHT) && !EntMan.hasComponent<CCapsuleCollider_t>(character)) {
+            CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(character);
+            collider.radius = 2.0f;
+            collider.height = 6.0f;
+        }
 
         // if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
         //     Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();

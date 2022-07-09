@@ -8,15 +8,21 @@ struct SPhysics_t;
 struct IPhysicsCommand_t;
 struct PhysicsCommandProcessor_t;
 struct CRigidbody_t;
+struct CTriggerVolume_t;
 
 struct RigidbodyUserPointer_t {
     ECS::EntityManager_t* entityManager {};
     CRigidbody_t* rigidbodyComponent    {};
-    uint32_t identifier                 {};
+};
+
+struct TriggerUserPointer_t {
+    ECS::EntityManager_t* entityManager {};
+    CTriggerVolume_t* triggerComponent  {};
 };
 
 struct PhysicsContext_t {
     btDynamicsWorld* dynamicsWorld {};
+    std::vector<ECS::Entityid_t>* triggers {};
 };
 
 struct IPhysicsCommand_t {

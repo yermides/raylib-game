@@ -1,4 +1,6 @@
 /assets/
+# dont include attributions until I remember to add all of them
+/attributions/
 /lib/
 /obj/
 /winobj/
@@ -7,3 +9,5 @@
 *.bat
 *.code-workspace
 *.log
+*.ico
+*.res

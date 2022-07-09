@@ -173,15 +173,15 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
 
     EntMan.addComponent<CTransform_t>(e, ptransform);
 
+    // {
+    //     CModelRenderer_t& model = EntMan.addComponent<CModelRenderer_t>(e);
+    //     model.model = RL::LoadModel("assets/untitled.obj");
+    // }
     {
         CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(e);
         collider.radius = 2.0f;
         collider.height = 6.0f;
     }
-    // {
-    //     CModelRenderer_t& model = EntMan.addComponent<CModelRenderer_t>(e);
-    //     model.model = RL::LoadModel("assets/untitled.obj");
-    // }
     {
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
         {
@@ -205,6 +205,10 @@ ECS::Entityid_t EntityFactory_t::createTrigger(const CTransform_t& ptransform) {
     ECS::Entityid_t e = EntMan.createEntity();
 
     EntMan.addComponent<CTransform_t>(e, ptransform);
+
+    CSphereCollider_t& collider = EntMan.addComponent<CSphereCollider_t>(e);
+    collider.radius = 5.0f;
+
     EntMan.addComponent<CTriggerVolume_t>(e);
 
     return e;

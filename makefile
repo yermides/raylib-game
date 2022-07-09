@@ -88,6 +88,13 @@ ifdef WIN64
 CC			:= x86_64-w64-mingw32-g++
 OBJ			:= winobj
 APP 		:= game.exe
+ICON		:= icon.res
+# ICON		:= $(OBJ)/icon.o# compile first with "windres game.rc game.o" # that was the first try
+
+ifndef LOGS
+# CCFLAGS		+= -Wl,-subsystem,windows# this is to tell target platform, hides the console 
+endif
+
 endif
 
 # RELEASE		:= 1
@@ -111,6 +118,7 @@ LIBS := \
 -lLinearMath\
 -lBulletCollision\
 -lBulletDynamics\
+# -mwindows\ # this also works to hide the console in windows
 # -lwinpthread\
 # -lpthread\
 # -lrlimgui\
@@ -138,7 +146,7 @@ MKDIR		:= mkdir -p
 .PHONY: info folders
 
 $(APP): $(OBJSUBDIRS) $(ALLOBJS)
-	$(CC) $(SHARED) $(ALLOBJS) -o $(APP) $(LIBS) $(CCFLAGS)
+	$(CC) $(SHARED) $(ALLOBJS) -o $(APP) $(LIBS) $(CCFLAGS) $(ICON)
 
 # $(CC) $(ALLOBJS) -o $(APP) $(LIBS) $(CCFLAGS)
 

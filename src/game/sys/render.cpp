@@ -32,6 +32,11 @@ SRender_t::SRender_t(uint32_t width, uint32_t height, RenderFlags_t flags) {
     ;
 
     RL::SetWindowState(stateFlags);
+
+    // RL::Image image = RL::LoadImage("assets/icon.png");
+    // RL::SetWindowIcon(image);
+    // RL::UnloadImage(image);
+
     // RL::SetTargetFPS(120); // WARNING, puts to sleep the ENTIRE main thread TODO: remove from here
 
     RL::rlImGuiSetup(true);
