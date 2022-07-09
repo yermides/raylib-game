@@ -92,6 +92,16 @@ namespace ECS {
             return m_componentsRegistry.try_get<Component_t>(e);
         }
 
+        template <typename... Args_t>
+        constexpr auto tryGetComponents(Entityid_t e) {
+            return m_componentsRegistry.try_get<Args_t...>(e);
+        }
+
+        template <typename... Args_t>
+        constexpr const auto tryGetComponents(Entityid_t e) const {
+            return m_componentsRegistry.try_get<Args_t...>(e);
+        }
+
         template <typename Component_t>
         constexpr Entityid_t getEntity(Component_t& component) {
             return entt::to_entity(m_componentsRegistry, component);

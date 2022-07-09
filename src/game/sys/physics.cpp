@@ -23,7 +23,6 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     );
 
     dynamicsWorld->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-
     dynamicsWorld->setGravity(gravity);
 
     debugDraw = std::make_unique<Bullet3PhysicsDrawer_t>();
@@ -37,7 +36,7 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
 
     dynamicsWorld->setInternalTickCallback(bulletInternalTickCallback, this, true);
 
-    
+    m_PhysicsContext.dynamicsWorld = dynamicsWorld.get();
 }
 
 SPhysics_t::~SPhysics_t() {
@@ -79,21 +78,6 @@ SPhysics_t::~SPhysics_t() {
 }
 
 void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
-    static bool ghostTestPassed = false;
-
-    if(!ghostTestPassed) {
-        
-
-        ghostTestPassed = true;
-    }
-
-    //
-    //
-    //
-    //
-    //
-    //
-
     auto lambda = [](auto e, CTransform_t& transform, CRigidbody_t& rigidbody) {
         // Update transform with rigidbody's transform
         btRigidBody& bullet3body = GetBullet3Rigidbody(rigidbody);
@@ -114,8 +98,12 @@ void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
 
     constexpr float kFixedTimestep = 1.0f / 60.0f;
 
-    addRigidbodiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
-    addCharactersToWorld(EntMan);
+    commandProcessor.update(EntMan);
+
+    // addCollidersToWorld(EntMan);
+    // addRigidbodiesToWorld(EntMan); // maybe rename to addRigidbodiesToWorld
+    // addCharactersToWorld(EntMan);
+
     dynamicsWorld->stepSimulation(deltatime, 5, kFixedTimestep);
     EntMan.forAllMatching<CTransform_t, CRigidbody_t>(lambda);
     dynamicsWorld->debugDrawWorld();
@@ -127,10 +115,14 @@ void SPhysics_t::ping() {
 }
 
 void SPhysics_t::registerAddColliderToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    commandProcessor.add<AddColliderToWorldCommand_t>(e);
+    return;
     collidersToAddWorld.emplace_back(e);
 }
 
 void SPhysics_t::registerAddRigidbodyToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
+    commandProcessor.add<AddRigidbodyToWorldCommand_t>(e);
+    return;
     rigidbodiesToAddWorld.emplace_back(e);
 }
 
@@ -174,8 +166,27 @@ void SPhysics_t::removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry
     // yeah it works well
 }
 
+template<typename ColliderType>
+void* GetColliderInternalData(ColliderType& collider) {}
+
+template<>
+void* GetColliderInternalData(CBoxCollider_t& collider) {
+    return collider.runtimeBullet3CollisionShape;
+}
+
+template<>
+void* GetColliderInternalData(CSphereCollider_t& collider) {
+    return collider.runtimeBullet3CollisionShape;
+}
+
+template<>
+void* GetColliderInternalData(CCapsuleCollider_t& collider) {
+    return collider.runtimeBullet3CollisionShape;
+}
+
 // private functions
 void SPhysics_t::addCollidersToWorld(ECS::EntityManager_t& EntMan) {
+
     for(const ECS::Entityid_t& e : collidersToAddWorld) {
         if(!EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e)) continue;
 
@@ -199,16 +210,18 @@ void SPhysics_t::addCollidersToWorld(ECS::EntityManager_t& EntMan) {
         colliderComponent->runtimeBullet3CollisionShape = collisionShape;
 
         // I'm still doubting these last lines, rigidbody may check ifthere's a collider, but anyway
-        if(EntMan.hasComponent<CRigidbody_t>(e)) {
-            CRigidbody_t& rigidbody = EntMan.getComponent<CRigidbody_t>(e);
-            rigidbody.attachedCollider = colliderComponent;
-        }
+        // if(EntMan.hasComponent<CRigidbody_t>(e)) {
+        //     CRigidbody_t& rigidbody = EntMan.getComponent<CRigidbody_t>(e);
+        //     rigidbody.attachedCollider = colliderComponent;
+        // }
     }
 
     collidersToAddWorld.clear();
 }
 
 void SPhysics_t::addRigidbodiesToWorld(ECS::EntityManager_t& EntMan) {
+
+
     for(const ECS::Entityid_t& e : rigidbodiesToAddWorld) {
         if(!EntMan.hasComponent<CRigidbody_t>(e) 
         || !EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e)) {
@@ -244,14 +257,15 @@ void SPhysics_t::addRigidbodiesToWorld(ECS::EntityManager_t& EntMan) {
         //  TODO: maybe use offset
         
         btTransform bulletTransform;
-        bulletTransform.setIdentity(); // DONE: mimic rotation of transform.rotation
-        bulletTransform.setOrigin(transform.position);
+        {   // DONE: mimic rotation of transform.rotation
+            bulletTransform.setIdentity(); 
+            bulletTransform.setOrigin(transform.position);
 
-        const Vector3f_t& rot = transform.rotation;
-
-        btQuaternion quat;
-		quat.setEuler(rot.get_y(), rot.get_x(), rot.get_z());
-		bulletTransform.setRotation(quat);
+            btQuaternion quat;
+            const Vector3f_t& rot = transform.rotation;
+            quat.setEuler(rot.get_y(), rot.get_x(), rot.get_z());
+            bulletTransform.setRotation(quat);
+        }
 
         // for bullet, bodies are automatically dynamic if they have mass, so enforce mass if type dynamic
         if(rigidbody.type == BodyType_t::DYNAMIC) {
@@ -273,9 +287,12 @@ void SPhysics_t::addRigidbodiesToWorld(ECS::EntityManager_t& EntMan) {
             collisionShape->calculateLocalInertia(mass, localInertia);
         }
 
+
         // Using motionstate is optional, it provides interpolation capabilities, and only synchronizes 'active' objects
         btDefaultMotionState* myMotionState = new btDefaultMotionState(bulletTransform);
+
         btRigidBody::btRigidBodyConstructionInfo rbInfo(mass, myMotionState, collisionShape, localInertia);
+
         btRigidBody* body = new btRigidBody(rbInfo);
         body->setAngularFactor(rigidbody.angularFactor);
 
@@ -297,7 +314,7 @@ void SPhysics_t::addRigidbodiesToWorld(ECS::EntityManager_t& EntMan) {
         rigidbody.attachedCollider = col;
 
         //add the body to the dynamics world
-        dynamicsWorld->addRigidBody(body /*, mask, group*/);
+        dynamicsWorld->addRigidBody(body ); //, mask, group
 
         RigidbodyUserPointer_t* userPointer = new RigidbodyUserPointer_t {
             &EntMan, &rigidbody
@@ -309,6 +326,8 @@ void SPhysics_t::addRigidbodiesToWorld(ECS::EntityManager_t& EntMan) {
     }
 
     rigidbodiesToAddWorld.clear();
+
+    
 }
 
 void SPhysics_t::addTriggersToWorld(ECS::EntityManager_t& EntMan) {

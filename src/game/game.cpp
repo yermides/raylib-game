@@ -11,9 +11,9 @@ Game_t::Game_t() {
 
     EntMan.connectOnContruct<CCamera_t, &SRender_t::setMainCamera>(Render);
     
-    // EntMan.connectOnContruct<CBoxCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
-    // EntMan.connectOnContruct<CSphereCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
-    // EntMan.connectOnContruct<CCapsuleCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
+    EntMan.connectOnContruct<CBoxCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
+    EntMan.connectOnContruct<CSphereCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
+    EntMan.connectOnContruct<CCapsuleCollider_t, &SPhysics_t::registerAddColliderToWorld>(Physics);
 
     EntMan.connectOnContruct<CRigidbody_t, &SPhysics_t::registerAddRigidbodyToWorld>(Physics);
 

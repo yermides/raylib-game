@@ -2,6 +2,7 @@
 #include <memory>
 #include <vector>
 #include "ecs/manager.hpp"
+#include "helpers/physics_commands.hpp"
 
 struct Vector3f_t;
 struct CRigidbody_t;
@@ -11,12 +12,7 @@ class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btDynamicsWorld;
 class btIDebugDraw;
-
-struct RigidbodyUserPointer_t {
-    ECS::EntityManager_t* entityManager {};
-    CRigidbody_t* rigidbodyComponent    {};
-    uint32_t identifier                 {};
-};
+struct RigidbodyUserPointer_t;
 
 // bullet3 physics system facade, units are meters, just like raylib
 struct SPhysics_t {
@@ -60,6 +56,9 @@ private:
 
     // I should store the trigger entities because their pairs are not checked by the world but by themselves
     // std::vector<CTriggerVolume_t> triggers {} or something
+
+    PhysicsContext_t m_PhysicsContext {};
+    PhysicsCommandProcessor_t commandProcessor { m_PhysicsContext };
 };
 
 void ApplyForce(CRigidbody_t& rigidbody, const Vector3f_t& force, const Vector3f_t& relativePosition);
