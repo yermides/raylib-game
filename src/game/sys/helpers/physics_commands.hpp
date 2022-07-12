@@ -10,9 +10,16 @@ struct PhysicsCommandProcessor_t;
 struct CRigidbody_t;
 struct CTriggerVolume_t;
 
+// Aiming to replace the other user pointers
+struct CollisionObjectUserPointer_t {
+    ECS::EntityManager_t& EntMan;
+    ECS::Entityid_t entity { ECS::NullEntity };
+};
+
 struct RigidbodyUserPointer_t {
     ECS::EntityManager_t* entityManager {};
     CRigidbody_t* rigidbodyComponent    {};
+    ECS::Entityid_t entity { ECS::NullEntity };
 };
 
 struct TriggerUserPointer_t {

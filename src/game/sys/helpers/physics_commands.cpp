@@ -175,7 +175,7 @@ void AddRigidbodyToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, Physics
 
         // Set user pointers, both in the component and in the bullet's body
         rigidbody.runtimeRigidbody = bulletRigidbody;
-        bulletRigidbody->setUserPointer(new RigidbodyUserPointer_t { &EntMan, &rigidbody });
+        bulletRigidbody->setUserPointer(new RigidbodyUserPointer_t { &EntMan, &rigidbody, m_Target });
     }
 
     // Rigidbody axis rotation constraints

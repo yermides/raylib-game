@@ -24,67 +24,17 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     ,   collisionConfiguration.get()
     );
 
-    setGravity(gravity);
-
-    dynamicsWorld->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-
     debugDraw = std::make_unique<Bullet3PhysicsDrawer_t>();
     dynamicsWorld->setDebugDrawer(debugDraw.get());
+    dynamicsWorld->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
 
-    // TODO: setup bullet collision response, there are two ways (and I don't know which one's better)
-    // 1st approach is to set an internal callback in the world that will check collisions manifolds
-    // 2nd approach is to do the same manually after StepSimulation
-    // I got a little doubt if the callback is called in the substepping process, if it does, 1st method might have too much calls
-    // spoiler: it does get called, 1st method is the way to go
+    setGravity(gravity);
 
+    gContactStartedCallback = bulletContactStartedCallback;
+    gContactEndedCallback = bulletContactEndedCallback;
     dynamicsWorld->setInternalTickCallback(bulletInternalTickCallback, this, true);
 
-    {   // Physics context setup
-        m_PhysicsContext.dynamicsWorld = dynamicsWorld.get();
-        m_PhysicsContext.triggers = &m_CachedTriggerObjects;
-    }
-
-    // static ECS::EntityManager_t* entman {}; // OK, THIS WORKS! add it as a static class pointer and we'll talk later
-
-    gContactStartedCallback = [](btPersistentManifold* const& manifold) {
-        // manifold->getObjectType()
-        // entman; // OK, THIS WORKS! add it as a static class pointer and we'll talk later
-        const btCollisionObject* object0 = manifold->getBody0();
-        const btCollisionObject* object1 = manifold->getBody1();
-
-        uint32_t e1, e2;
-
-        if(auto* body = btRigidBody::upcast(object0); body) {
-            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
-            e1 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
-        }
-
-        if(auto* body = btRigidBody::upcast(object1); body) {
-            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
-            e2 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
-        }
-
-        LOG_CORE_WARN("Entity {} started colision with {}", e1, e2);
-    };
-
-    gContactEndedCallback = [](btPersistentManifold* const& manifold) {
-        const btCollisionObject* object0 = manifold->getBody0();
-        const btCollisionObject* object1 = manifold->getBody1();
-
-        uint32_t e1, e2;
-
-        if(auto* body = btRigidBody::upcast(object0); body) {
-            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
-            e1 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
-        }
-
-        if(auto* body = btRigidBody::upcast(object1); body) {
-            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
-            e2 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
-        }
-
-        LOG_CORE_CRITICAL("Entity {} ended colision with {}", e1, e2);
-    };
+    initPhysicsContext();
 }
 
 SPhysics_t::~SPhysics_t() {
@@ -244,25 +194,12 @@ void SPhysics_t::removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry
     // yeah it works well
 }
 
-template<typename ColliderType>
-void* GetColliderInternalData(ColliderType& collider) {}
-
-template<>
-void* GetColliderInternalData(CBoxCollider_t& collider) {
-    return collider.runtimeCollisionShape;
-}
-
-template<>
-void* GetColliderInternalData(CSphereCollider_t& collider) {
-    return collider.runtimeCollisionShape;
-}
-
-template<>
-void* GetColliderInternalData(CCapsuleCollider_t& collider) {
-    return collider.runtimeCollisionShape;
-}
-
 // private functions
+
+void SPhysics_t::initPhysicsContext() {
+    m_PhysicsContext.dynamicsWorld = dynamicsWorld.get();
+    m_PhysicsContext.triggers = &m_CachedTriggerObjects;
+}
 
 void SPhysics_t::uploadDebugDrawContext(ECS::EntityManager_t& EntMan) {
     // if(!debugDraw.get()) return;
@@ -273,6 +210,12 @@ void SPhysics_t::uploadDebugDrawContext(ECS::EntityManager_t& EntMan) {
 }
 
 void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeStep) {
+    // TODO: setup bullet collision response, there are two ways (and I don't know which one's better)
+    // 1st approach is to set an internal callback in the world that will check collisions manifolds
+    // 2nd approach is to do the same manually after StepSimulation
+    // I got a little doubt if the callback is called in the substepping process, if it does, 1st method might have too much calls
+    // spoiler: it does get called, 1st method is the way to go
+
     SPhysics_t* Physics = static_cast<SPhysics_t*>(world->getWorldUserInfo());
 
     if(!Physics) return;
@@ -330,6 +273,85 @@ void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeSt
     }
 
     // Contact checks of ghost objects will happen during update
+}
+
+void SPhysics_t::bulletContactStartedCallback(btPersistentManifold* const& manifold) {
+    const btCollisionObject* object0 = manifold->getBody0();
+    const btCollisionObject* object1 = manifold->getBody1();
+
+    if(!(object0 && object1)) return;
+
+    RigidbodyUserPointer_t* userPointer0 = static_cast<RigidbodyUserPointer_t*>(object0->getUserPointer());
+    RigidbodyUserPointer_t* userPointer1 = static_cast<RigidbodyUserPointer_t*>(object1->getUserPointer());
+
+    if(!(userPointer0 && userPointer1)) return;
+
+    ECS::EntityManager_t& EntMan = *(userPointer0->entityManager);
+    ECS::Entityid_t entity0 = userPointer0->entity;
+    ECS::Entityid_t entity1 = userPointer1->entity;
+
+    if(!(EntMan.hasComponent<CCollisionable_t>(entity0) && EntMan.hasComponent<CCollisionable_t>(entity1))) return;
+
+    // Determine the type of collision, assume that CRigidbody_t will contain a btRigidbody and trigger volume a ghost object
+    CollisionEventType_t eventType { CollisionEventType_t::VOID_COLLISION };
+
+    if(EntMan.hasComponent<CRigidbody_t>(entity0) && EntMan.hasComponent<CRigidbody_t>(entity1)) {
+        eventType = CollisionEventType_t::BODY_WITH_BODY;
+    } else if (EntMan.hasComponent<CTriggerVolume_t>(entity0) && EntMan.hasComponent<CTriggerVolume_t>(entity1)) {
+        eventType = CollisionEventType_t::TRIGGER_WITH_TRIGGER;
+    } else if (
+        (EntMan.hasComponent<CRigidbody_t>(entity0) || EntMan.hasComponent<CRigidbody_t>(entity1))
+        && (EntMan.hasComponent<CTriggerVolume_t>(entity0) || EntMan.hasComponent<CTriggerVolume_t>(entity1)) 
+    ) {
+        eventType = CollisionEventType_t::BODY_WITH_TRIGGER;
+    }
+
+    if(eventType == CollisionEventType_t::VOID_COLLISION) return;
+
+    CCollisionable_t& collisionable0 = EntMan.getComponent<CCollisionable_t>(entity0);
+    CCollisionable_t& collisionable1 = EntMan.getComponent<CCollisionable_t>(entity1);
+    CollisionEvent_t collision { eventType, EntMan, entity0, entity1 };
+
+    // Send collision event to first collisionable
+    // Check if callback is found in the map, else it could break the game
+
+    {
+        auto& callbacks = collisionable0.callbacks;
+
+        if(callbacks.find(collision.type) != callbacks.end()) 
+            callbacks[collision.type](collision);
+    }
+
+    // Swap pointers so collisionableA refers to self and collisionableB refers to the other
+    std::swap(collision.selfEntity, collision.otherEntity);
+
+    // Now sent it to the other
+    {
+        auto& callbacks = collisionable1.callbacks;
+
+        if(callbacks.find(collision.type) != callbacks.end()) 
+            callbacks[collision.type](collision);
+    }
+
+}
+
+void SPhysics_t::bulletContactEndedCallback(btPersistentManifold* const& manifold) {
+    const btCollisionObject* object0 = manifold->getBody0();
+    const btCollisionObject* object1 = manifold->getBody1();
+
+    uint32_t e1, e2;
+
+    if(auto* body = btRigidBody::upcast(object0); body) {
+        RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
+        e1 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
+    }
+
+    if(auto* body = btRigidBody::upcast(object1); body) {
+        RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
+        e2 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
+    }
+
+    LOG_CORE_CRITICAL("Entity {} ended colision with {}", e1, e2);
 }
 
 // Private Anonymous Functions

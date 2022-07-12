@@ -14,6 +14,7 @@ class btBroadphaseInterface;
 class btSequentialImpulseConstraintSolver;
 class btDynamicsWorld;
 class btIDebugDraw;
+class btPersistentManifold;
 struct RigidbodyUserPointer_t;
 
 // bullet3 physics system facade, units are meters, just like raylib
@@ -34,8 +35,11 @@ struct SPhysics_t {
     void registerAddCharacterToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
     void removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e);
 private:
+    void initPhysicsContext();
     void uploadDebugDrawContext(ECS::EntityManager_t& EntMan);
     static void bulletInternalTickCallback(btDynamicsWorld* world, float timeStep);
+    static void bulletContactStartedCallback(btPersistentManifold* const& manifold);
+    static void bulletContactEndedCallback(btPersistentManifold* const& manifold);
 
     std::unique_ptr<btDefaultCollisionConfiguration> collisionConfiguration;
     std::unique_ptr<btCollisionDispatcher> dispatcher;

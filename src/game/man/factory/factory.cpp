@@ -141,6 +141,13 @@ ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransfo
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
         body.type = BodyType_t::STATIC;
     }
+    {
+        CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
+        collisionable.type = CollisionableType_t::Default;
+        collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = [](const CollisionEvent_t& collision) {
+            LOG_CORE_WARN("Plane with id {} has been in contact with {}", (uint32_t)collision.selfEntity, (uint32_t)collision.otherEntity);
+        };
+    }
 
     LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
     return e;
@@ -188,15 +195,7 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
         CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
         collisionable.type = CollisionableType_t::Default;
         collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = [&](const CollisionEvent_t& collision) {
-            if(!(collision.collisionableA && collision.collisionableB)) return;
-
-            CCollisionable_t& collisionableA = *(collision.collisionableA);
-            CCollisionable_t& collisionableB = *(collision.collisionableB);
-
-            uint32_t  idA { (uint32_t)EntityManager.getEntity(collisionableA) }
-                    , idB { (uint32_t)EntityManager.getEntity(collisionableB) };
-
-            LOG_CORE_CRITICAL("This entity {} has been in contact with {}", idA, idB);
+            LOG_CORE_WARN("Character with id {} has been in contact with {}", (uint32_t)collision.selfEntity, (uint32_t)collision.otherEntity);
         };
     }
     {

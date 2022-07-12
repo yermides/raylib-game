@@ -10,12 +10,21 @@
 struct CCollisionable_t {
     using Callback_t = std::function<void(const CollisionEvent_t& collision)>;
 
+    struct CallbackCollection_t {
+        Callback_t onEventEnter, onEventStay, onEventExit;
+    };
+
+    Hashmap_t<CollisionEventType_t, CallbackCollection_t> callbacks2;
+
     CollisionLayer_t    layer { CollisionLayer_t::AllFilter }; // currently not used, it may correspond to the rigidbody component really
     CollisionableType_t type  { CollisionableType_t::Default }; // type of object for the collision
     Hashmap_t<CollisionEventType_t, Callback_t> callbacks;
     // callbacks should be cached in the global functions and activated in the internalTickCallback
     // also, to serialize them, there should be a cache in the physics that correlates ids and function pointers
 };
+
+
+
 
 // So, there are two ways to implement collision response callbacks (and I'll probably go for 1st)
 
