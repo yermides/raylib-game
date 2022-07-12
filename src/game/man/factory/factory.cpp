@@ -144,9 +144,13 @@ ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransfo
     {
         CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
         collisionable.type = CollisionableType_t::Default;
-        collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = [](const CollisionEvent_t& collision) {
+
+        CCollisionable_t::CallbackCollection_t bodyWithBodyCollection;
+        bodyWithBodyCollection.onEventEnter = [](const CollisionEvent_t& collision) {
             LOG_CORE_WARN("Plane with id {} has been in contact with {}", (uint32_t)collision.selfEntity, (uint32_t)collision.otherEntity);
         };
+
+        collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = bodyWithBodyCollection;
     }
 
     LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
@@ -190,15 +194,6 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
         collider.height = 6.0f;
     }
     {
-        const ECS::EntityManager_t& EntityManager = EntMan;
-
-        CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
-        collisionable.type = CollisionableType_t::Default;
-        collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = [&](const CollisionEvent_t& collision) {
-            LOG_CORE_WARN("Character with id {} has been in contact with {}", (uint32_t)collision.selfEntity, (uint32_t)collision.otherEntity);
-        };
-    }
-    {
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);
         {
             // body.angularFactor = {0,0,0};
@@ -209,6 +204,20 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
             body.mass = 10.0f;
             body.angularFactor = {0,0,0};
         }
+    }
+    {
+        CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
+        collisionable.type = CollisionableType_t::Default;
+
+        CCollisionable_t::CallbackCollection_t bodyWithBodyCollection;
+        bodyWithBodyCollection.onEventEnter = [](const CollisionEvent_t& collision) {
+            LOG_CORE_WARN("Character with id {} has been in contact with {}", (uint32_t)collision.selfEntity, (uint32_t)collision.otherEntity);
+        };
+        bodyWithBodyCollection.onEventExit = [](const CollisionEvent_t& collision) {
+            LOG_CORE_WARN("Why r u runnin'");
+        };
+
+        collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = bodyWithBodyCollection;
     }
 
     LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));
