@@ -1,6 +1,6 @@
 #pragma once
 #include "helpers/renderer.hpp"
-#include "helpers/includes/raylib.hpp"
+#include "game/helpers/includes/raylib.hpp"
 
 enum class SpriteRenderMode_t {
         TWO_DIMENSIONS

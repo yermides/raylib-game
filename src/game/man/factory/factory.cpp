@@ -1,6 +1,6 @@
 #include "factory.hpp"
 #include "game/sys/helpers/all.hpp"
-#include "helpers/logger.hpp"
+#include "game/helpers/logger.hpp"
 
 EntityFactory_t::EntityFactory_t(ECS::EntityManager_t& pEntMan) : EntMan(pEntMan) {}
 
@@ -181,6 +181,23 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
         CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(e);
         collider.radius = 2.0f;
         collider.height = 6.0f;
+    }
+    {
+        const ECS::EntityManager_t& EntityManager = EntMan;
+
+        CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
+        collisionable.type = CollisionableType_t::Default;
+        collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = [&](const CollisionEvent_t& collision) {
+            if(!(collision.collisionableA && collision.collisionableB)) return;
+
+            CCollisionable_t& collisionableA = *(collision.collisionableA);
+            CCollisionable_t& collisionableB = *(collision.collisionableB);
+
+            uint32_t  idA { (uint32_t)EntityManager.getEntity(collisionableA) }
+                    , idB { (uint32_t)EntityManager.getEntity(collisionableB) };
+
+            LOG_CORE_CRITICAL("This entity {} has been in contact with {}", idA, idB);
+        };
     }
     {
         CRigidbody_t& body = EntMan.addComponent<CRigidbody_t>(e);

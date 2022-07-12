@@ -9,7 +9,8 @@ Bullet3PhysicsDrawer_t::Bullet3PhysicsDrawer_t(std::size_t capacity, int pflags)
 void Bullet3PhysicsDrawer_t::drawLine(const btVector3& from, const btVector3& to, const btVector3& color)  { 
     // basically, the world->debugDraw will call this line multiple times and I will save the results in a SingletonComponent
     // I'm saving the line in the array to collect it later in the RenderSystem
-    lines.emplace_back(from, to);
+    // lines.emplace_back(from, to);
+    lines.emplace_back(from, to, color);
 }
 
 void Bullet3PhysicsDrawer_t::drawContactPoint(const btVector3& PointOnB, const btVector3& normalOnB, btScalar distance, int lifeTime, const btVector3& color) { 

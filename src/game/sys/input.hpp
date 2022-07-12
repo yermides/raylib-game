@@ -4,9 +4,9 @@
 #include "ecs/manager.hpp"
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/keybindings.hpp"
-#include "helpers/includes/raylib.hpp"
-#include "helpers/vector2.hpp"
-#include "helpers/logger.hpp"
+#include "game/helpers/includes/raylib.hpp"
+#include "game/helpers/vector2.hpp"
+#include "game/helpers/logger.hpp"
 
 struct SInput_t {
     explicit SInput_t(const KeyBindings_t& bindings);

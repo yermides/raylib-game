@@ -1,5 +1,5 @@
 #pragma once
-#include "helpers/vector3.hpp"
+#include "game/helpers/vector3.hpp"
 
 struct CTransform_t {
     Vector3f_t position   { 0.0f, 0.0f, 0.0f }; // meters

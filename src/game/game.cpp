@@ -1,8 +1,8 @@
 #include "game.hpp"
 #include "game/cmp/helpers/all.hpp"
-#include "helpers/includes/raylib.hpp"
-#include "helpers/vector3.hpp"
-#include "helpers/logger.hpp"
+#include "game/helpers/includes/raylib.hpp"
+#include "game/helpers/vector3.hpp"
+#include "game/helpers/logger.hpp"
 
 Game_t::Game_t() {
     LOG_INIT();
@@ -37,6 +37,7 @@ void Game_t::loop() {
     constexpr float deltatime = 1.0f / kFPS; // fixed delta for now
 
     Render.SetTargetFPS(kFPS);
+    Physics.setGravity(Vector3f_t{0,-30,0});
 
     const CInput_t cameraControls = CreateFlyingCameraControls();
     ECS::Entityid_t camera = Factory.createCamera(CTransform_t{{-10,10,-10},{-20,45,0}});
@@ -60,7 +61,7 @@ void Game_t::loop() {
     auto& camTrans = EntMan.getComponent<CTransform_t>(camera);
     auto& charTrans = EntMan.getComponent<CTransform_t>(character);
 
-    // ECS::Entityid_t trigger = Factory.createTrigger(CTransform_t{{0,-10,0}});
+    ECS::Entityid_t trigger = Factory.createTrigger(CTransform_t{{0,15,0}});
 
     const Vector3f_t distanceToCamera = camTr - charTr;
 
@@ -69,11 +70,11 @@ void Game_t::loop() {
         Vector3f_t dest = (charTr + (GetBackVector(camTrans) * 30.0f)) + Vector3f_t{0,10,0};
         camTr = Vector3f_t::lerp(camTr, dest, 1.0f * deltatime);
 
-        if(Input.IsMouseButtonDown(MouseButton_t::RIGHT) && !EntMan.hasComponent<CCapsuleCollider_t>(character)) {
-            CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(character);
-            collider.radius = 2.0f;
-            collider.height = 6.0f;
-        }
+        // if(Input.IsMouseButtonDown(MouseButton_t::RIGHT) && !EntMan.hasComponent<CCapsuleCollider_t>(character)) {
+        //     CCapsuleCollider_t& collider = EntMan.addComponent<CCapsuleCollider_t>(character);
+        //     collider.radius = 2.0f;
+        //     collider.height = 6.0f;
+        // }
 
         // if(Input.IsMouseButtonPressed(MouseButton_t::RIGHT)) {
         //     Input.IsCursorHidden() ? Input.EnableCursor() : Input.DisableCursor();
@@ -88,7 +89,7 @@ void Game_t::loop() {
         // }
             
         {
-            constexpr float vel = 10.0f;
+            constexpr float vel = 15.0f;
 
             if(Input.IsKeyDown(Key_t::A)) {
                 camTrans.rotation.add_y((vel * 3.0f * deltatime));
@@ -104,7 +105,9 @@ void Game_t::loop() {
                 // LOG_WARN("Camera right2  (?) = {}", camTrans.rotation.right().toString());
                 // LOG_WARN("Camera up      (?) = {}", GetUpVector(camTrans).toString());
                 // LOG_WARN("Camera up2     (?) = {}", camTrans.rotation.up().toString());
-                ApplyCentralImpulse(characterBody, Vector3f_t{0,100,0});
+                // ClearForces(characterBody);
+                SetLinearVelocity(characterBody, Vector3f_t{0,0,0});
+                ApplyCentralImpulse(characterBody, Vector3f_t{0,300,0});
             }
             if(Input.IsKeyDown(Key_t::KUP)) {
                 Vector3f_t forward = GetForwardVector(camTrans);
@@ -143,6 +146,8 @@ void Game_t::loop() {
 #endif
 
 void Game_t::loop_multithread() {
+    // this will remained paused for a while
+
     constexpr float kFPS = 60.0f;
     constexpr float kFixedDelta = 1.0f / kFPS;
     Render.SetTargetFPS(kFPS);

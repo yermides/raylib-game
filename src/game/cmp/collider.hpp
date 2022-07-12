@@ -1,10 +1,10 @@
 #pragma once
-#include "helpers/vector3.hpp"
+#include "game/helpers/vector3.hpp"
 
-// base class, should not be instantiated
+// base class for shapes, should not be instantiated
 struct CCollider_t {
     Vector3f_t offset {};
-    void* runtimeBullet3CollisionShape {};
+    void* runtimeCollisionShape {};
 };
 
 struct CBoxCollider_t final : public CCollider_t {
@@ -19,4 +19,8 @@ struct CCapsuleCollider_t final : public CCollider_t {
     float height { 2.0f }, radius { 0.5f };
 };
 
-// TODO: composite collider & stop the user from using multiple collider components (will use CCompositeCollider_t)
+// TODO: composite collider & stop the user from using multiple collider components (shall use CCompoundCollider_t)
+
+struct CCompoundCollider_t final : public CCollider_t {
+    // TODO:
+};

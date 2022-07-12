@@ -1,6 +1,6 @@
 #pragma once
 #include <queue>
-#include "helpers/vector3.hpp"
+#include "game/helpers/vector3.hpp"
 
 // TODO: implement in the physics system part
 struct CCharacterController_t {

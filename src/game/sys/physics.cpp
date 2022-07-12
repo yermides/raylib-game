@@ -2,10 +2,10 @@
 #include <bullet3/btBulletCollisionCommon.h>
 #include <bullet3/BulletCollision/CollisionDispatch/btGhostObject.h>
 #include <bullet3/btBulletDynamicsCommon.h>
-#include "helpers/vector3.hpp"
+#include "game/helpers/vector3.hpp"
 #include "game/cmp/helpers/all.hpp"
 #include "helpers/physics_drawer.hpp"
-#include "helpers/logger.hpp"
+#include "game/helpers/logger.hpp"
 
 #include <iostream>
 
@@ -24,8 +24,9 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
     ,   collisionConfiguration.get()
     );
 
+    setGravity(gravity);
+
     dynamicsWorld->getPairCache()->setInternalGhostPairCallback(new btGhostPairCallback());
-    dynamicsWorld->setGravity(gravity);
 
     debugDraw = std::make_unique<Bullet3PhysicsDrawer_t>();
     dynamicsWorld->setDebugDrawer(debugDraw.get());
@@ -42,6 +43,48 @@ SPhysics_t::SPhysics_t(const Vector3f_t& gravity) {
         m_PhysicsContext.dynamicsWorld = dynamicsWorld.get();
         m_PhysicsContext.triggers = &m_CachedTriggerObjects;
     }
+
+    // static ECS::EntityManager_t* entman {}; // OK, THIS WORKS! add it as a static class pointer and we'll talk later
+
+    gContactStartedCallback = [](btPersistentManifold* const& manifold) {
+        // manifold->getObjectType()
+        // entman; // OK, THIS WORKS! add it as a static class pointer and we'll talk later
+        const btCollisionObject* object0 = manifold->getBody0();
+        const btCollisionObject* object1 = manifold->getBody1();
+
+        uint32_t e1, e2;
+
+        if(auto* body = btRigidBody::upcast(object0); body) {
+            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
+            e1 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
+        }
+
+        if(auto* body = btRigidBody::upcast(object1); body) {
+            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
+            e2 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
+        }
+
+        LOG_CORE_WARN("Entity {} started colision with {}", e1, e2);
+    };
+
+    gContactEndedCallback = [](btPersistentManifold* const& manifold) {
+        const btCollisionObject* object0 = manifold->getBody0();
+        const btCollisionObject* object1 = manifold->getBody1();
+
+        uint32_t e1, e2;
+
+        if(auto* body = btRigidBody::upcast(object0); body) {
+            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
+            e1 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
+        }
+
+        if(auto* body = btRigidBody::upcast(object1); body) {
+            RigidbodyUserPointer_t* userPointer = static_cast<RigidbodyUserPointer_t*>(body->getUserPointer());
+            e2 = static_cast<ENTT_ID_TYPE>(userPointer->entityManager->getEntity(*(userPointer->rigidbodyComponent)));
+        }
+
+        LOG_CORE_CRITICAL("Entity {} ended colision with {}", e1, e2);
+    };
 }
 
 SPhysics_t::~SPhysics_t() {
@@ -80,6 +123,10 @@ SPhysics_t::~SPhysics_t() {
 		collisionShapes[j] = nullptr;
 		delete shape;
 	}
+}
+
+void SPhysics_t::setGravity(const Vector3f_t& gravity) {
+    dynamicsWorld->setGravity(gravity);
 }
 
 void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
@@ -123,8 +170,8 @@ void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
                 collisionPair->m_algorithm->getAllContactManifolds(manifoldArray);
             }
 
-            std::cout << manifoldArray.size() << "\n";
-            LOG_CORE_INFO("Detected a total of {} AABB collisions in trigger", manifoldArray.size(), static_cast<ENTT_ID_TYPE>(e));
+            // std::cout << manifoldArray.size() << "\n";
+            // LOG_CORE_INFO("Detected a total of {} AABB collisions in trigger", manifoldArray.size(), static_cast<ENTT_ID_TYPE>(e));
 
             for(int j {}; j < manifoldArray.size(); ++j) {
                 btPersistentManifold *manifold = manifoldArray[j];
@@ -149,10 +196,6 @@ void SPhysics_t::update(ECS::EntityManager_t& EntMan, const float deltatime) {
     uploadDebugDrawContext(EntMan);
 }
 
-void SPhysics_t::ping() {
-    LOG_INFO("Yes, I am alive {}", (void*)this);
-}
-
 void SPhysics_t::registerAddColliderToWorld(ECS::ComponentRegistry_t& registry, ECS::Entityid_t e) {
     commandProcessor.add<AddColliderToWorldCommand_t>(e);
 }
@@ -174,11 +217,11 @@ void SPhysics_t::removeAndDeleteBodyFromWorld(ECS::ComponentRegistry_t& registry
     const CRigidbody_t& rigidbody = EntMan.getComponent<CRigidbody_t>(e);
 
     if(rigidbody.attachedCollider) {
-        btCollisionShape* shape = static_cast<btCollisionShape*>(rigidbody.attachedCollider->runtimeBullet3CollisionShape);
+        btCollisionShape* shape = static_cast<btCollisionShape*>(rigidbody.attachedCollider->runtimeCollisionShape);
         if(shape) delete shape;
     }
     
-    btRigidBody* bullet3body = static_cast<btRigidBody*>(rigidbody.runtimeBullet3Body);
+    btRigidBody* bullet3body = static_cast<btRigidBody*>(rigidbody.runtimeRigidbody);
 
     if(bullet3body) {
         if (bullet3body->getMotionState()) {
@@ -206,17 +249,17 @@ void* GetColliderInternalData(ColliderType& collider) {}
 
 template<>
 void* GetColliderInternalData(CBoxCollider_t& collider) {
-    return collider.runtimeBullet3CollisionShape;
+    return collider.runtimeCollisionShape;
 }
 
 template<>
 void* GetColliderInternalData(CSphereCollider_t& collider) {
-    return collider.runtimeBullet3CollisionShape;
+    return collider.runtimeCollisionShape;
 }
 
 template<>
 void* GetColliderInternalData(CCapsuleCollider_t& collider) {
-    return collider.runtimeBullet3CollisionShape;
+    return collider.runtimeCollisionShape;
 }
 
 // private functions
@@ -260,9 +303,7 @@ void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeSt
         ECS::Entityid_t entityB = EntMan.getEntity(rbB);
 
         uint32_t idA { static_cast<ENTT_ID_TYPE>(entityA) }, idB { static_cast<ENTT_ID_TYPE>(entityB) };
-        LOG_CORE_INFO("Detected collision between entities {} and {}", idA, idB);
-
-        // LOG_CORE_INFO("Detected collision between entities {} and {}", static_cast<ENTT_ID_TYPE>(entityA), static_cast<ENTT_ID_TYPE>(entityB));
+        // LOG_CORE_INFO("Detected collision between entities {} and {}", idA, idB);
 
         // TODO: here I should save to a SPhysics_t member container a collection of all collisions 
         // (maybe a set to avoid duplicates, I dunno)
@@ -277,7 +318,7 @@ void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeSt
             
             // if any point exceeds the other's structure, there is a physical collision, not just AABB's
             if (pt.getDistance() < 0.0f) {
-                LOG_CORE_INFO("Detected Internal collision between entities {} and {}", idA, idB);
+                // LOG_CORE_INFO("Detected Internal collision between entities {} and {}", idA, idB);
                 break;
                 
                 // TODO: store contact information
@@ -294,7 +335,7 @@ void SPhysics_t::bulletInternalTickCallback(btDynamicsWorld* world, float timeSt
 // Private Anonymous Functions
 
 btRigidBody& GetBullet3Rigidbody(const CRigidbody_t& rigidbody) {
-    btRigidBody& bullet3body = *(static_cast<btRigidBody*>(rigidbody.runtimeBullet3Body));
+    btRigidBody& bullet3body = *(static_cast<btRigidBody*>(rigidbody.runtimeRigidbody));
     return bullet3body;
 }
 

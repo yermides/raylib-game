@@ -1,6 +1,6 @@
 #pragma once
 #include "helpers/renderer.hpp"
-#include "helpers/includes/raylib.hpp"
+#include "game/helpers/includes/raylib.hpp"
 
 struct CModelRenderer_t : Renderer_t {
     RL::Model model;

@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <bullet3/LinearMath/btVector3.h>
-#include "helpers/includes/raylib.hpp"
+#include "game/helpers/includes/raylib.hpp"
 
 // Facade for glm::vec3
 struct Vector3f_t {

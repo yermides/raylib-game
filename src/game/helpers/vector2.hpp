@@ -1,7 +1,7 @@
 #pragma once
 // Facade for glm::vec2
 #include <glm/glm.hpp>
-#include "helpers/includes/raylib.hpp"
+#include "game/helpers/includes/raylib.hpp"
 
 struct Vector2f_t {
     Vector2f_t(const glm::vec2& pv) {

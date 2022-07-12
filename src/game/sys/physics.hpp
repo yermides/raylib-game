@@ -3,7 +3,8 @@
 #include <vector>
 #include "ecs/manager.hpp"
 #include "helpers/physics_commands.hpp"
-// #include "helpers/types.hpp"
+#include <unordered_map>
+// #include "game/helpers/types.hpp"
 
 struct Vector3f_t;
 struct CRigidbody_t;
@@ -20,9 +21,9 @@ struct SPhysics_t {
     explicit SPhysics_t(const Vector3f_t& gravity);
     ~SPhysics_t();
 
-    void update(ECS::EntityManager_t& EntMan, const float deltatime);
+    void setGravity(const Vector3f_t& gravity);
 
-    void ping(); // debug purposes
+    void update(ECS::EntityManager_t& EntMan, const float deltatime);
 
     // Vector3f_t raycast() // just to not forget
 
@@ -49,6 +50,9 @@ private:
     PhysicsContext_t m_PhysicsContext {};
     PhysicsCommandProcessor_t commandProcessor { m_PhysicsContext };
     std::vector<ECS::Entityid_t> m_CachedTriggerObjects {};
+
+    // using PhysicsTypeCallback = std::function<void(CRigidbody_t&, CRigidbody_t&)>;
+    // inline static std::unordered_map<int, PhysicsTypeCallback>
 };
 
 void ApplyForce(CRigidbody_t& rigidbody, const Vector3f_t& force, const Vector3f_t& relativePosition);

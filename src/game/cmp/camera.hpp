@@ -1,5 +1,5 @@
 #pragma once
-#include "helpers/vector3.hpp"
+#include "game/helpers/vector3.hpp"
 
 enum class Projection_t {
         Perspective
@@ -13,6 +13,4 @@ struct CCamera_t {
     Projection_t projection { Projection_t::Perspective };
 };
 
-struct CCameraRaylibData_t {
-    
-};
+// struct CCameraRaylibData_t {}; // maybe use a void* runtimeCamera

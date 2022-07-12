@@ -5,38 +5,18 @@
 #include "game/cmp/helpers/all.hpp"
 #include <tuple>
 
+// Command processor
+
 void PhysicsCommandProcessor_t::update(ECS::EntityManager_t& EntMan) {
     while(!commands.empty()) {
-        commands.front()->execute(EntMan, *this, m_Context);
+        commands.front()->execute(EntMan, m_Context);
         commands.pop();
     }
 }
 
-/*
-bool HasAnyCollisionComponents(ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-    return EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e);
-}
+// Helper functions
 
-btCollisionShape* GetCollisionShapeFromAnyComponent(ECS::EntityManager_t& EntMan, ECS::Entityid_t e) {
-    btCollisionShape* collisionShape { nullptr };
-
-    if (EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e)) {
-        auto [box, sphere, capsule] = EntMan.tryGetComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(e);
-        
-        CCollider_t* base {};
-        
-        if(box)     base = box;
-        if(sphere)  base = sphere;
-        if(capsule) base = capsule;
-
-        collisionShape = static_cast<btCollisionShape*>(base->runtimeBullet3CollisionShape);
-    }
-
-    return collisionShape;
-}
-*/
-
-btCollisionShape* TryObtainCollisionShape(ECS::Entityid_t target, ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) {
+static btCollisionShape* TryObtainCollisionShape(ECS::Entityid_t target, ECS::EntityManager_t& EntMan, PhysicsContext_t& context) {
     btCollisionShape* collisionShape {};
 
     // Try to get collision shape of out collision components, if not, shape will remain null
@@ -49,20 +29,20 @@ btCollisionShape* TryObtainCollisionShape(ECS::Entityid_t target, ECS::EntityMan
         if(sphere)  base = sphere;
         if(capsule) base = capsule;
 
-        collisionShape = static_cast<btCollisionShape*>(base->runtimeBullet3CollisionShape);
+        collisionShape = static_cast<btCollisionShape*>(base->runtimeCollisionShape);
 
         // If we have a component that will define a shape, configure the shape in-place and get it
         if(!collisionShape) {
             std::unique_ptr<IPhysicsCommand_t> command = std::make_unique<AddColliderToWorldCommand_t>(target);
-            command->execute(EntMan, processor, context);
-            collisionShape = static_cast<btCollisionShape*>(base->runtimeBullet3CollisionShape);
+            command->execute(EntMan, context);
+            collisionShape = static_cast<btCollisionShape*>(base->runtimeCollisionShape);
         }
     }
 
     return collisionShape;
 }
 
-btTransform TransferEntityTransform(CTransform_t& transformComponent) {
+static btTransform TransferEntityTransform(CTransform_t& transformComponent) {
     // Configure starting position and rotation same as the entities'
     const Vector3f_t& startingBodyTranslation { transformComponent.position }
     , startingBodyRotation { transformComponent.rotation };
@@ -77,7 +57,7 @@ btTransform TransferEntityTransform(CTransform_t& transformComponent) {
     return bulletTransform;
 }
 
-std::tuple<float, btVector3> CalculateMassAndInertia(CRigidbody_t& rigidbodyComponent, btCollisionShape* collisionShape) {
+static std::tuple<float, btVector3> CalculateMassAndInertia(CRigidbody_t& rigidbodyComponent, btCollisionShape* collisionShape) {
     // Set the type of rigidbody and it's mass and inertia
     btVector3 localInertia { 0.0f, 0.0f, 0.0f };
     btScalar mass { 0.0f };
@@ -95,7 +75,7 @@ std::tuple<float, btVector3> CalculateMassAndInertia(CRigidbody_t& rigidbodyComp
     return { mass, localInertia };
 }
 
-void SetCollisionFlags(const CRigidbody_t& rigidbodyComponent, btRigidBody* bulletRigidbody) {
+static void SetCollisionFlags(const CRigidbody_t& rigidbodyComponent, btRigidBody* bulletRigidbody) {
     // Set bullet's internal collision flags that discriminate collision contacts interaction
     if(!bulletRigidbody) return;
 
@@ -117,7 +97,9 @@ void SetCollisionFlags(const CRigidbody_t& rigidbodyComponent, btRigidBody* bull
     }
 }
 
-void AddColliderToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) {
+// Actual commands functionality
+
+void AddColliderToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) {
     if(!EntMan.hasAnyComponents<CBoxCollider_t, CSphereCollider_t, CCapsuleCollider_t>(m_Target)) return;
 
     CCollider_t*      colliderComponent {};
@@ -137,7 +119,7 @@ void AddColliderToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsC
         colliderComponent = &collider;
     }
 
-    colliderComponent->runtimeBullet3CollisionShape = collisionShape;
+    colliderComponent->runtimeCollisionShape = collisionShape;
     // collisionShape->setUserPointer(colliderComponent); // not really needed for now but may be useful
 
     // TODO: need to improve the ability to add colliders at runtime
@@ -150,8 +132,8 @@ void AddColliderToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsC
     //     }
 
     //     // Maybe I should add a command that would add a collider to a collision object, but this is ok
-    //     if(rigidbody->runtimeBullet3Body) {
-    //         btRigidBody* bulletRigidbody = static_cast<btRigidBody*>(rigidbody->runtimeBullet3Body);
+    //     if(rigidbody->runtimeRigidbody) {
+    //         btRigidBody* bulletRigidbody = static_cast<btRigidBody*>(rigidbody->runtimeRigidbody);
     //         bulletRigidbody->setCollisionShape(collisionShape);
     //         // maybe also calculate local inertia
     //     } 
@@ -163,14 +145,14 @@ void AddColliderToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsC
 
 }
 
-void AddRigidbodyToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) {
+void AddRigidbodyToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) {
     // Stop the command if it doesn't have rigidbody or it has already been configured, runtimeBody won't be null
     if(
         !EntMan.hasComponent<CRigidbody_t>(m_Target) 
-        || EntMan.getComponent<CRigidbody_t>(m_Target).runtimeBullet3Body
+        || EntMan.getComponent<CRigidbody_t>(m_Target).runtimeRigidbody
     ) return;
 
-    btCollisionShape* collisionShape = TryObtainCollisionShape(m_Target, EntMan, processor, context);
+    btCollisionShape* collisionShape = TryObtainCollisionShape(m_Target, EntMan, context);
 
     // Start configuring the rigidbody from the component data
     auto [transform, rigidbody] = EntMan.getComponents<CTransform_t, CRigidbody_t>(m_Target);
@@ -192,7 +174,7 @@ void AddRigidbodyToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, Physics
         // That kinda indicates it shouldn't be touched once setup
 
         // Set user pointers, both in the component and in the bullet's body
-        rigidbody.runtimeBullet3Body = bulletRigidbody;
+        rigidbody.runtimeRigidbody = bulletRigidbody;
         bulletRigidbody->setUserPointer(new RigidbodyUserPointer_t { &EntMan, &rigidbody });
     }
 
@@ -201,7 +183,7 @@ void AddRigidbodyToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, Physics
     SetCollisionFlags(rigidbody, bulletRigidbody);
 }
 
-void AddTriggerToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) {
+void AddTriggerToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) {
     if(
         !EntMan.hasComponent<CTriggerVolume_t>(m_Target) 
         || EntMan.getComponent<CTriggerVolume_t>(m_Target).runtimeTriggerObject
@@ -209,7 +191,7 @@ void AddTriggerToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsCo
 
     auto [transform, trigger] = EntMan.getComponents<CTransform_t, CTriggerVolume_t>(m_Target);
 
-    btCollisionShape* collisionShape = TryObtainCollisionShape(m_Target, EntMan, processor, context);
+    btCollisionShape* collisionShape = TryObtainCollisionShape(m_Target, EntMan, context);
     btGhostObject* ghostObject = new btPairCachingGhostObject(); // maybe use btPairCachingGhostObject*
     btTransform bulletTransform = TransferEntityTransform(transform);
 
@@ -233,6 +215,6 @@ void AddTriggerToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsCo
     }
 }
 
-void AddCharacterToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) {
+void AddCharacterToWorldCommand_t::execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) {
     // TODO:
 }

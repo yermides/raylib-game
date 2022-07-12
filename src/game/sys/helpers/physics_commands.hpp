@@ -26,7 +26,7 @@ struct PhysicsContext_t {
 };
 
 struct IPhysicsCommand_t {
-    virtual void execute(ECS::EntityManager_t&, PhysicsCommandProcessor_t&, PhysicsContext_t&) = 0;
+    virtual void execute(ECS::EntityManager_t&, PhysicsContext_t&) = 0;
     virtual ~IPhysicsCommand_t() = default;
 };
 
@@ -49,28 +49,28 @@ private:
 
 struct AddColliderToWorldCommand_t final : public IPhysicsCommand_t {
     explicit AddColliderToWorldCommand_t(ECS::Entityid_t e) : m_Target(e) {}
-    void execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) override;
+    void execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) override;
 private:
     ECS::Entityid_t m_Target {};
 };
 
 struct AddRigidbodyToWorldCommand_t final : public IPhysicsCommand_t {
     explicit AddRigidbodyToWorldCommand_t(ECS::Entityid_t e) : m_Target(e) {}
-    void execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) override;
+    void execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) override;
 private:
     ECS::Entityid_t m_Target {};
 };
 
 struct AddTriggerToWorldCommand_t final : public IPhysicsCommand_t {
     explicit AddTriggerToWorldCommand_t(ECS::Entityid_t e) : m_Target(e) {}
-    void execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) override;
+    void execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) override;
 private:
     ECS::Entityid_t m_Target {};
 };
 
 struct AddCharacterToWorldCommand_t final : public IPhysicsCommand_t {
     explicit AddCharacterToWorldCommand_t(ECS::Entityid_t e) : m_Target(e) {}
-    void execute(ECS::EntityManager_t& EntMan, PhysicsCommandProcessor_t& processor, PhysicsContext_t& context) override;
+    void execute(ECS::EntityManager_t& EntMan, PhysicsContext_t& context) override;
 private:
     ECS::Entityid_t m_Target {};
 };

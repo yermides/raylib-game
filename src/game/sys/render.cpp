@@ -2,8 +2,8 @@
 #include <iostream>
 #include <cstring>
 #include <imgui/imgui.h>
-#include "helpers/includes/raylib.hpp"
-#include "helpers/logger.hpp"
+#include "game/helpers/includes/raylib.hpp"
+#include "game/helpers/logger.hpp"
 
 #include "transform.hpp"
 
@@ -161,6 +161,7 @@ void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
     {
         RL::rlImGuiBegin();
         RL::ClearBackground(RL::RAYWHITE);
+        // RL::ClearBackground(RL::BLANK);
 
         RL::BeginMode3D(rlcamera);
         {
@@ -174,7 +175,15 @@ void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {
                     Vector3f_t from = line.from;
                     Vector3f_t to = line.to;
 
-                    RL::DrawLine3D(from, to, RL::VIOLET);
+                    // RL::Color color = { 
+                    //     uint8_t(line.color.get_x() * 255)
+                    // ,   uint8_t(line.color.get_y() * 255)
+                    // ,   uint8_t(line.color.get_z() * 255)
+                    // ,   255
+                    // };
+
+                    // RL::DrawLine3D(from, to, color);
+                    RL::DrawLine3D(from, to, RL::BLUE);
                 }
             }
             // RL::DrawMesh(plane, RL::Material{}, RL::Matrix{});

@@ -2,7 +2,7 @@
 #include <list>
 #include <functional>
 #include "helpers/keyboard.hpp"
-#include "helpers/vector2.hpp"
+#include "game/helpers/vector2.hpp"
 
 struct InputAction_t {
     // TODO: change signature so it accepts deltatime as const float
