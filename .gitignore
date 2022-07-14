@@ -11,3 +11,5 @@
 *.log
 *.ico
 *.res
+*.lua
+*.ini

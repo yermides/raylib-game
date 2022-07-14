@@ -1,6 +1,12 @@
 #pragma once
 #include "game/helpers/vector3.hpp"
 
+enum class ColliderShape_t {
+        BOX
+    ,   SPHERE
+    ,   CAPSULE
+};
+
 // base class for shapes, should not be instantiated
 struct CCollider_t {
     Vector3f_t offset {};

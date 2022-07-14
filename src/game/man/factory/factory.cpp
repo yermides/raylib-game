@@ -1,4 +1,5 @@
 #include "factory.hpp"
+#include "game/cmp/helpers/all.hpp"
 #include "game/sys/helpers/all.hpp"
 #include "game/helpers/logger.hpp"
 
@@ -111,7 +112,7 @@ ECS::Entityid_t EntityFactory_t::createFlyingCamera(const CTransform_t& ptransfo
     return e;
 }
 
-ECS::Entityid_t EntityFactory_t::createStaticMesh(std::string_view filepath, const CTransform_t& ptransform) {
+ECS::Entityid_t EntityFactory_t::createStaticMesh(const CTransform_t& ptransform, std::string_view filepath) {
     ECS::Entityid_t e = EntMan.createEntity();
 
     {
@@ -143,7 +144,7 @@ ECS::Entityid_t EntityFactory_t::createPhysicsPlane(const CTransform_t& ptransfo
     }
     {
         CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
-        collisionable.type = CollisionableType_t::Default;
+        collisionable.type = CollisionableType_t::Platform;
 
         CCollisionable_t::CallbackCollection_t bodyWithBodyCollection;
         bodyWithBodyCollection.onEventEnter = [](const CollisionEvent_t& collision) {
@@ -207,17 +208,35 @@ ECS::Entityid_t EntityFactory_t::createCharacter(const CTransform_t& ptransform)
     }
     {
         CCollisionable_t& collisionable = EntMan.addComponent<CCollisionable_t>(e);
-        collisionable.type = CollisionableType_t::Default;
+        collisionable.type = CollisionableType_t::Player;
 
         CCollisionable_t::CallbackCollection_t bodyWithBodyCollection;
         bodyWithBodyCollection.onEventEnter = [](const CollisionEvent_t& collision) {
+            ECS::EntityManager_t& EntMan = collision.EntMan;
+
+            if(EntMan.hasComponent<CCollisionable_t>(collision.otherEntity)) {
+                CCollisionable_t& otherCollisionable = EntMan.getComponent<CCollisionable_t>(collision.otherEntity);
+
+                if(otherCollisionable.type == CollisionableType_t::Platform) {
+                    CCharacterMovement_t& movement = EntMan.addComponent<CCharacterMovement_t>(collision.selfEntity);
+                    movement.bCanJump = true;
+
+                    LOG_CORE_WARN("Character with id {} should be able to jump", (uint32_t)collision.selfEntity);
+                }
+            }
+
             LOG_CORE_WARN("Character with id {} has been in contact with {}", (uint32_t)collision.selfEntity, (uint32_t)collision.otherEntity);
-        };
-        bodyWithBodyCollection.onEventExit = [](const CollisionEvent_t& collision) {
-            LOG_CORE_WARN("Why r u runnin'");
         };
 
         collisionable.callbacks[CollisionEventType_t::BODY_WITH_BODY] = bodyWithBodyCollection;
+    }
+    {
+        CCharacterMovement_t& movement = EntMan.addComponent<CCharacterMovement_t>(e);
+        movement.bCanJump = false;
+        movement.fJumpForce = 300.0f;
+    }
+    {
+        CInput_t input = EntMan.addComponent<CInput_t>(e, CreateThirdPersonCharacterControls());
     }
 
     LOG_INFO(std::string(__PRETTY_FUNCTION__) + " = {};", static_cast<ENTT_ID_TYPE>(e));

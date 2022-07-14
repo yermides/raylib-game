@@ -1,5 +1,6 @@
 #include "input.hpp"
 #include "transform.hpp"
+#include "physics.hpp"
 #include <string>
 
 SInput_t::SInput_t(const KeyBindings_t& bindings) {
@@ -209,6 +210,66 @@ CInput_t CreateFlyingCameraControls() {
         ,   [velocity](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
                 CTransform_t& transform = EntMan.getComponent<CTransform_t>(e);
                 transform.position -= Vector3f_t{0,1,0} * (deltatime * velocity);
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+
+    return input;
+}
+
+CInput_t CreateThirdPersonCharacterControls() {
+    CInput_t input {};
+
+    {
+        InputAction_t action { Key_t::KUP, KeyState_t::DOWN, [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                auto [transform, rigidbody, movement] = EntMan.getComponents<CTransform_t, CRigidbody_t, CCharacterMovement_t>(e);
+                Translate(rigidbody, GetForwardVector(transform) * (movement.fVelocity * deltatime));
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+
+    {
+        InputAction_t action { Key_t::KRIGHT, KeyState_t::DOWN, [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                auto [transform, rigidbody, movement] = EntMan.getComponents<CTransform_t, CRigidbody_t, CCharacterMovement_t>(e);
+                Translate(rigidbody, GetRightVector(transform) * (movement.fVelocity * deltatime));
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+
+    {
+        InputAction_t action { Key_t::KLEFT, KeyState_t::DOWN, [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                auto [transform, rigidbody, movement] = EntMan.getComponents<CTransform_t, CRigidbody_t, CCharacterMovement_t>(e);
+                Translate(rigidbody, GetLeftVector(transform) * (movement.fVelocity * deltatime));
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+
+    {
+        InputAction_t action { Key_t::KDOWN, KeyState_t::DOWN, [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                auto [transform, rigidbody, movement] = EntMan.getComponents<CTransform_t, CRigidbody_t, CCharacterMovement_t>(e);
+                Translate(rigidbody, GetBackVector(transform) * (movement.fVelocity * deltatime));
+            } 
+        };
+
+        input.actions.emplace_back(action);
+    }
+
+    {
+        InputAction_t action { Key_t::SPACE, KeyState_t::PRESSED, [](ECS::EntityManager_t& EntMan, ECS::Entityid_t e, const float deltatime) {
+                auto [rigidbody, movement] = EntMan.getComponents<CRigidbody_t, CCharacterMovement_t>(e);
+
+                if(movement.bCanJump) {
+                    ApplyCentralImpulse(rigidbody, Vector3f_t{0, movement.fJumpForce, 0});
+                    movement.bCanJump = false;
+                }
             } 
         };
 

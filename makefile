@@ -118,6 +118,7 @@ LIBS := \
 -lLinearMath\
 -lBulletCollision\
 -lBulletDynamics\
+-lenet\
 # -mwindows\ # this also works to hide the console in windows
 # -lwinpthread\
 # -lpthread\

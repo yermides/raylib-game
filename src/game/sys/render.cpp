@@ -133,15 +133,15 @@ void SRender_t::updateOne(ECS::Entityid_t entity, CTransform_t& transform, CMode
 
 void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& camera) {
     // check if there is a valid camera entity
-    if(CCamera_t* cmp_cam = EntMan.tryGetComponent<CCamera_t>(mainCamera); cmp_cam != nullptr) {
+    if(CCamera_t* cameraComponent = EntMan.tryGetComponent<CCamera_t>(mainCamera)) {
         CTransform_t& transform = EntMan.getComponent<CTransform_t>(mainCamera);
         camera.position = transform.position;
-        // camera.target = cmp_cam->target; // TODO: put this in the camera system
+        // camera.target = cameraComponent->target; // TODO: put this in the camera system
         // camera.target = transform.position + transform.rotation.forward();
         camera.target = transform.position + GetForwardVector(transform);
 
-        camera.up = cmp_cam->up;
-        camera.fovy = cmp_cam->fovy;
+        camera.up = cameraComponent->up;
+        camera.fovy = cameraComponent->fovy;
         camera.projection = RL::CAMERA_PERSPECTIVE;
     } else { // if no camera component in scene, use these default values
         camera.position = { 50.0f, 50.0f, 50.0f };
@@ -151,7 +151,7 @@ void SRender_t::uploadCameraValues(ECS::EntityManager_t& EntMan, RL::Camera3D& c
         camera.projection = RL::CAMERA_PERSPECTIVE;
     }
 
-    RL::UpdateCamera(&camera);
+    // RL::UpdateCamera(&camera);
 }
 
 void SRender_t::drawEverything(ECS::EntityManager_t& EntMan) {

@@ -49,5 +49,6 @@ private:
     };
 };
 
+// namespace ComponentFunctions {} maybe
 CInput_t CreateFlyingCameraControls();
-// namespace ComponentFunctions {}
+CInput_t CreateThirdPersonCharacterControls();

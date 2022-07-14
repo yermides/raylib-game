@@ -14,5 +14,7 @@
 #include "../character.hpp"
 #include "../trigger.hpp"
 #include "../collisionable.hpp"
+// movement
+#include "../character_movement.hpp"
 // singletons
 #include "../physics_draw_ctx.hpp"

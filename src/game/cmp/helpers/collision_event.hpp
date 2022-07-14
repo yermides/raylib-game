@@ -1,7 +1,5 @@
 #pragma once
 
-struct CCollisionable_t;
-
 enum class CollisionEventType_t {
         VOID_COLLISION // default type to initialize
 
